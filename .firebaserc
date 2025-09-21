@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "smaaks-1"
+  },
+  "targets": {
+    "smaaks-1": {
+      "hosting": {
+        "smaaks-groups": [
+          "smaaks-groups"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
