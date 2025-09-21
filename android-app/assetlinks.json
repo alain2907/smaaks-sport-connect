@@ -1,8 +1,0 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "com.smaaks.groups1",
-    "sha256_cert_fingerprints": ["34:CA:4F:B9:35:36:D5:5A:B6:E5:4A:AF:42:89:69:24:B2:2A:E6:49:E8:D2:71:82:DE:29:2C:5E:FB:92:F0:31"]
-  }
-}]

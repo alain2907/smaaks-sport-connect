@@ -36,40 +36,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-# firebase
-.firebase/
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# Android keystore - NEVER commit
-android.keystore
-*.keystore
-android-app/android.keystore
-android-app/*.keystore
-android-app/app/*.keystore
-
-# Gradle properties with passwords
-android-app/gradle.properties
-
-# Build outputs
-android-app/app/build/
-android-app/build/
-android-app/.gradle/
-android-app/out/
-
-# APK/AAB files (can be regenerated)
-*.apk
-*.aab
-
-# CSV data files
-*.csv
-
-# Temp files
-manifest-checksum.txt
-twa-manifest.json
-smaaks-1-b0b4f542ac45.json
