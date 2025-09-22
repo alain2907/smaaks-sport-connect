@@ -6,7 +6,6 @@ import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 
 const SPORTS = [
   { id: 'football', name: 'Football', emoji: '⚽' },
@@ -21,15 +20,15 @@ const SPORTS = [
 
 const SKILL_LEVELS = [
   { id: 'beginner', name: 'Débutant', description: 'Je débute dans ce sport' },
-  { id: 'intermediate', name: 'Intermédiaire', description: 'J\'ai quelques bases' },
-  { id: 'advanced', name: 'Avancé', description: 'J\'ai un bon niveau' },
+  { id: 'intermediate', name: 'Intermédiaire', description: 'J&apos;ai quelques bases' },
+  { id: 'advanced', name: 'Avancé', description: 'J&apos;ai un bon niveau' },
   { id: 'all', name: 'Tous niveaux', description: 'Ouvert à tous' }
 ];
 
 export default function Create() {
   const router = useRouter();
   const { user } = useAuth();
-  const { createEvent, loading } = useEvents();
+  const { createEvent } = useEvents();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -65,7 +64,7 @@ export default function Create() {
     setIsSubmitting(false);
   };
 
-  const updateField = (field: string, value: any) => {
+  const updateField = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

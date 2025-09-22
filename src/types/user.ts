@@ -27,6 +27,6 @@ export interface User {
 }
 
 // Keeping the old interface for backward compatibility
-export interface UserProfile extends User {}
+export type UserProfile = User;
 
 export type CreateUserProfile = Omit<UserProfile, 'id' | 'createdAt' | 'lastActive' | 'stats'>;

@@ -3,7 +3,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Event } from '@/types/event';
 import { EventCard } from '@/components/events/EventCard';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';

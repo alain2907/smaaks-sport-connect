@@ -2,7 +2,6 @@ import {
   collection,
   addDoc,
   updateDoc,
-  deleteDoc,
   doc,
   getDocs,
   getDoc,
@@ -24,11 +23,13 @@ export const COLLECTIONS = {
 } as const;
 
 // Utilitaire pour convertir les timestamps Firestore
-function convertTimestamp(timestamp: any): Date {
+function convertTimestamp(timestamp: unknown): Date {
   if (!timestamp) return new Date();
-  if (typeof timestamp.toDate === 'function') return timestamp.toDate();
+  if (typeof timestamp === 'object' && timestamp !== null && 'toDate' in timestamp && typeof (timestamp as any).toDate === 'function') {
+    return (timestamp as any).toDate();
+  }
   if (timestamp instanceof Date) return timestamp;
-  return new Date(timestamp);
+  return new Date(String(timestamp));
 }
 
 // Events Service
