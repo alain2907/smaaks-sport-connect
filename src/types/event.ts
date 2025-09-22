@@ -14,19 +14,16 @@ export interface Event {
   id: string;
   title: string;
   description?: string;
-  sport: string; // Sport ID
-  date: string; // ISO date string
-  startTime: string; // HH:mm format
-  endTime?: string; // HH:mm format
-  location: Location;
-  maxPlayers: number;
-  currentPlayers: number;
-  level?: SportLevel;
-  price?: number;
-  equipment?: string[];
-  createdBy: string; // User ID
-  createdAt: string;
-  participants: string[]; // User IDs
+  sport: string;
+  date: Date;
+  location: string; // Simplified for demo
+  maxParticipants: number;
+  participantIds: string[];
+  skillLevel: 'beginner' | 'intermediate' | 'advanced' | 'all';
+  equipment?: string;
+  creatorId: string;
+  createdAt: Date;
+  updatedAt: Date;
   status: 'active' | 'cancelled' | 'completed' | 'full';
 }
 
@@ -39,4 +36,4 @@ export interface EventFilters {
   availableOnly?: boolean;
 }
 
-export type CreateEventData = Omit<Event, 'id' | 'createdAt' | 'currentPlayers' | 'participants' | 'status'>;
+export type CreateEventData = Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'participantIds' | 'status'>;

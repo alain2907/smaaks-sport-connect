@@ -12,15 +12,28 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Debug: Check if config is loaded
+console.log('Firebase config loaded:', {
+  apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
+  authDomain: firebaseConfig.authDomain ? 'Set' : 'Missing',
+  projectId: firebaseConfig.projectId ? 'Set' : 'Missing',
+});
+
 let app;
 try {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  console.log('Firebase app initialized successfully');
 } catch (error) {
-  console.warn('Firebase initialization failed:', error);
+  console.error('Firebase initialization failed:', error);
   app = null;
 }
 
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
+
+console.log('Firebase services:', {
+  auth: auth ? 'Initialized' : 'Failed',
+  db: db ? 'Initialized' : 'Failed'
+});
 
 export default app;

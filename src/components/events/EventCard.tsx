@@ -1,8 +1,8 @@
 import { Event } from '@/types/event';
-import { SPORTS, SPORT_LEVELS } from '@/types/sport';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 
 interface EventCardProps {
   event: Event;
@@ -10,13 +10,32 @@ interface EventCardProps {
   onView?: (eventId: string) => void;
 }
 
-export function EventCard({ event, onJoin, onView }: EventCardProps) {
-  const sport = SPORTS.find(s => s.id === event.sport);
-  const isFull = event.currentPlayers >= event.maxPlayers;
-  const spotsLeft = event.maxPlayers - event.currentPlayers;
+const SPORT_EMOJIS: Record<string, string> = {
+  football: '⚽',
+  basketball: '🏀',
+  tennis: '🎾',
+  running: '🏃‍♂️',
+  badminton: '🏸',
+  volleyball: '🏐',
+  cycling: '🚴‍♂️',
+  swimming: '🏊‍♂️'
+};
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+const SKILL_LEVEL_NAMES: Record<string, string> = {
+  beginner: 'Débutant',
+  intermediate: 'Intermédiaire',
+  advanced: 'Avancé',
+  all: 'Tous niveaux'
+};
+
+export function EventCard({ event, onJoin, onView }: EventCardProps) {
+  const { user } = useAuth();
+  const sportEmoji = SPORT_EMOJIS[event.sport] || '🏃‍♂️';
+  const isFull = event.participantIds.length >= event.maxParticipants;
+  const spotsLeft = event.maxParticipants - event.participantIds.length;
+  const isParticipant = user && event.participantIds.includes(user.uid);
+
+  const formatDate = (date: Date) => {
     return date.toLocaleDateString('fr-FR', {
       weekday: 'short',
       day: 'numeric',
@@ -24,85 +43,98 @@ export function EventCard({ event, onJoin, onView }: EventCardProps) {
     });
   };
 
-  const formatTime = (time: string) => {
-    return time.slice(0, 5); // HH:mm
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
-    <Card className="mb-4" onClick={() => onView?.(event.id)}>
-      <CardContent className="p-4">
+    <Card variant="gradient" className="mb-4 hover-lift cursor-pointer" onClick={() => onView?.(event.id)}>
+      <CardContent className="p-6">
         <div className="flex items-start justify-between">
           {/* Left section */}
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">{sport?.icon}</span>
-              <h3 className="font-semibold text-gray-900">{event.title}</h3>
-              {event.level && (
-                <Badge variant="info" size="sm">
-                  {SPORT_LEVELS[event.level]}
-                </Badge>
-              )}
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-3xl">{sportEmoji}</span>
+              <div>
+                <h3 className="font-bold text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  {event.title}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="info" size="sm">
+                    {SKILL_LEVEL_NAMES[event.skillLevel]}
+                  </Badge>
+                  {isParticipant && (
+                    <Badge variant="success" size="sm">
+                      ✓ Inscrit
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1 text-sm text-gray-600">
-              <div className="flex items-center gap-1">
-                <span>📅</span>
-                <span>{formatDate(event.date)} à {formatTime(event.startTime)}</span>
-                {event.endTime && (
-                  <span>- {formatTime(event.endTime)}</span>
-                )}
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-gray-700">
+                <span className="text-lg">📅</span>
+                <span className="font-medium">
+                  {formatDate(event.date)} à {formatTime(event.date)}
+                </span>
               </div>
 
-              <div className="flex items-center gap-1">
-                <span>📍</span>
-                <span>{event.location.address}, {event.location.city}</span>
+              <div className="flex items-center gap-2 text-gray-700">
+                <span className="text-lg">📍</span>
+                <span className="font-medium">{event.location}</span>
               </div>
 
-              <div className="flex items-center gap-1">
-                <span>👥</span>
-                <span>
-                  {event.currentPlayers}/{event.maxPlayers} joueurs
+              <div className="flex items-center gap-2 text-gray-700">
+                <span className="text-lg">👥</span>
+                <span className="font-medium">
+                  {event.participantIds.length}/{event.maxParticipants} participants
                   {!isFull && (
-                    <span className="text-green-600 ml-1">
-                      ({spotsLeft} place{spotsLeft > 1 ? 's' : ''} disponible{spotsLeft > 1 ? 's' : ''})
+                    <span className="text-emerald-600 ml-2">
+                      ({spotsLeft} place{spotsLeft > 1 ? 's' : ''} restante{spotsLeft > 1 ? 's' : ''})
                     </span>
                   )}
                 </span>
               </div>
 
-              {event.price && (
-                <div className="flex items-center gap-1">
-                  <span>💰</span>
-                  <span>{event.price}€</span>
+              {event.equipment && (
+                <div className="flex items-center gap-2 text-gray-700">
+                  <span className="text-lg">🎽</span>
+                  <span className="font-medium">{event.equipment}</span>
                 </div>
               )}
             </div>
 
             {event.description && (
-              <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+              <p className="text-gray-600 mt-3 line-clamp-2">
                 {event.description}
               </p>
             )}
           </div>
 
           {/* Right section */}
-          <div className="ml-4 flex flex-col items-end gap-2">
+          <div className="ml-6 flex flex-col items-end gap-3">
             <Badge
-              variant={isFull ? 'error' : event.currentPlayers > 0 ? 'warning' : 'success'}
+              variant={isFull ? 'error' : event.participantIds.length > 0 ? 'warning' : 'success'}
               size="sm"
             >
-              {isFull ? 'Complet' : event.currentPlayers > 0 ? 'Places limitées' : 'Disponible'}
+              {isFull ? '🔴 Complet' : event.participantIds.length > 0 ? '🟡 Places limitées' : '🟢 Disponible'}
             </Badge>
 
-            {!isFull && onJoin && (
+            {onJoin && (
               <Button
                 size="sm"
+                variant={isParticipant ? 'danger' : 'primary'}
+                disabled={isFull && !isParticipant}
                 onClick={(e) => {
                   e.stopPropagation();
                   onJoin(event.id);
                 }}
               >
-                Rejoindre
+                {isParticipant ? '🚫 Quitter' : isFull ? '🔒 Complet' : '🚀 Rejoindre'}
               </Button>
             )}
           </div>

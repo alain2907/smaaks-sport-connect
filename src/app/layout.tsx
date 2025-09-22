@@ -24,7 +24,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="antialiased">
+      <body className="antialiased" suppressHydrationWarning={true}>
         <AuthProvider>
           {children}
           <BottomTabs />

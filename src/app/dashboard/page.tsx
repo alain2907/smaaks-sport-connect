@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { QuickGuide } from '@/components/onboarding/QuickGuide';
+import { useEvents } from '@/hooks/useEvents';
 
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [events, setEvents] = useState<Event[]>([]);
+  const { events, loading: eventsLoading, error: eventsError, joinEvent, leaveEvent } = useEvents();
   const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
@@ -22,11 +23,6 @@ export default function Dashboard() {
       router.push('/login');
     }
   }, [user, loading, router]);
-
-  useEffect(() => {
-    // TODO: Charger les vrais événements depuis Firebase
-    setEvents([]);
-  }, []);
 
   if (loading) {
     return (
@@ -43,9 +39,17 @@ export default function Dashboard() {
     return null;
   }
 
-  const handleJoinEvent = (eventId: string) => {
-    // TODO: Implémenter la logique pour rejoindre un événement
-    console.log('Rejoindre événement:', eventId);
+  const handleJoinEvent = async (eventId: string) => {
+    if (!user) return;
+
+    const event = events.find(e => e.id === eventId);
+    if (!event) return;
+
+    if (event.participantIds.includes(user.uid)) {
+      await leaveEvent(eventId);
+    } else {
+      await joinEvent(eventId);
+    }
   };
 
   const handleViewEvent = (eventId: string) => {
@@ -132,7 +136,32 @@ export default function Dashboard() {
             </Badge>
           </div>
 
-          {events.length === 0 ? (
+          {eventsError ? (
+            <Card variant="glass">
+              <CardContent className="text-center py-12 bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl">
+                <span className="text-6xl mb-6 block">⚠️</span>
+                <h3 className="text-xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent mb-3">
+                  Erreur de connexion
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {eventsError}
+                </p>
+                <Button variant="primary" onClick={() => window.location.reload()}>
+                  🔄 Réessayer
+                </Button>
+              </CardContent>
+            </Card>
+          ) : eventsLoading ? (
+            <Card variant="glass">
+              <CardContent className="text-center py-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl">
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-500 mx-auto"></div>
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 animate-ping rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 opacity-50"></div>
+                </div>
+                <p className="text-purple-600 mt-4 font-medium">Chargement des événements...</p>
+              </CardContent>
+            </Card>
+          ) : events.length === 0 ? (
             <Card variant="glass">
               <CardContent className="text-center py-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl">
                 <span className="text-6xl mb-6 block animate-pulse">🏃‍♂️</span>

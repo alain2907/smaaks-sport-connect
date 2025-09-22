@@ -1,6 +1,6 @@
 import { SportLevel } from './sport';
 
-export interface UserProfile {
+export interface User {
   id: string;
   email: string;
   firstName?: string;
@@ -8,29 +8,25 @@ export interface UserProfile {
   displayName?: string;
   avatar?: string;
   bio?: string;
-  location?: {
-    city: string;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
-  };
-  favoriteSports: string[]; // Sport IDs
-  sportLevels: Record<string, SportLevel>; // Sport ID -> Level
-  createdAt: string;
-  lastActive: string;
+  location?: string;
+  favoriteSports?: string[];
+  skillLevels?: Record<string, SportLevel>;
+  createdAt: Date;
+  updatedAt: Date;
   stats: {
-    eventsCreated: number;
-    eventsJoined: number;
-    rating: number;
-    reviewCount: number;
+    matchesPlayed: number;
+    sportsPlayed: number;
+    averageRating: number;
   };
-  preferences: {
+  preferences?: {
     notifications: boolean;
     publicProfile: boolean;
     showLocation: boolean;
-    maxDistance: number; // km for suggestions
+    maxDistance: number;
   };
 }
+
+// Keeping the old interface for backward compatibility
+export interface UserProfile extends User {}
 
 export type CreateUserProfile = Omit<UserProfile, 'id' | 'createdAt' | 'lastActive' | 'stats'>;

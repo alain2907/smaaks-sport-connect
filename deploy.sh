@@ -27,6 +27,30 @@ fi
 
 # Vérification 3: Bon projet Vercel ?
 echo -e "${YELLOW}📋 Vérification du projet Vercel...${NC}"
+
+# Vérifier le projet lié
+if [ -f ".vercel/project.json" ]; then
+    # Récupérer le nom du projet depuis vercel ls
+    VERCEL_OUTPUT=$(vercel ls 2>&1 | grep -A1 "Retrieving project")
+    VERCEL_NAME=$(echo "$VERCEL_OUTPUT" | grep "/" | sed -n 's/.*\/\([^ ]*\).*/\1/p')
+
+    if [ -z "$VERCEL_NAME" ]; then
+        # Fallback: essayer une autre méthode
+        VERCEL_NAME=$(vercel ls 2>&1 | grep "smaaks-sport-connect" | head -1)
+    fi
+
+    if [[ "$VERCEL_NAME" == *"smaaks-sport-connect"* ]]; then
+        echo -e "${GREEN}✅ Projet Vercel vérifié: smaaks-sport-connect${NC}"
+    else
+        echo -e "${RED}❌ ERREUR: Le projet Vercel ne correspond pas à smaaks-sport-connect!${NC}"
+        echo -e "${YELLOW}Utilisez 'vercel link' pour lier le bon projet${NC}"
+        exit 1
+    fi
+else
+    echo -e "${YELLOW}⚠️  Aucun projet Vercel lié. Utilisez 'vercel link' d'abord${NC}"
+    exit 1
+fi
+
 vercel ls | head -n 5
 
 echo ""
