@@ -2,11 +2,18 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Event } from '@/types/event';
+import { EventCard } from '@/components/events/EventCard';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+
 
 export default function Dashboard() {
-  const { user, logout, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
+  const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -14,10 +21,15 @@ export default function Dashboard() {
     }
   }, [user, loading, router]);
 
+  useEffect(() => {
+    // TODO: Charger les vrais événements depuis Firebase
+    setEvents([]);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
@@ -26,61 +38,130 @@ export default function Dashboard() {
     return null;
   }
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
+  const handleJoinEvent = (eventId: string) => {
+    // TODO: Implémenter la logique pour rejoindre un événement
+    console.log('Rejoindre événement:', eventId);
+  };
+
+  const handleViewEvent = (eventId: string) => {
+    router.push(`/events/${eventId}`);
+  };
+
+  const handleCreateEvent = () => {
+    router.push('/create');
+  };
+
+  const getUserDisplayName = () => {
+    return user.displayName || user.email?.split('@')[0] || 'Joueur';
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Dashboard SMAAKS Sport Connect
-            </h1>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header */}
+      <div className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                Sport Connect
+              </h1>
+              <p className="text-sm text-gray-500">
+                Salut {getUserDisplayName()} 👋
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCreateEvent}
             >
-              Déconnexion
-            </button>
+              ➕ Proposer une dispo
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Suggestions personnalisées */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">
+            Suggestions pour toi
+          </h2>
+          <Card>
+            <CardContent className="text-center py-8">
+              <span className="text-4xl mb-4 block">🎯</span>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Pas encore de suggestions
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Complète ton profil pour recevoir des suggestions personnalisées
+              </p>
+              <Button variant="outline" size="sm">
+                Compléter mon profil
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Fil des disponibilités */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Disponibilités récentes
+            </h2>
+            <Badge variant="info" size="sm">
+              {events.length} dispos actives
+            </Badge>
           </div>
 
-          <div className="mb-6">
-            <p className="text-gray-600">
-              Bienvenue, {user.email}!
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-indigo-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-indigo-900 mb-2">
-                Mes Équipes
-              </h3>
-              <p className="text-indigo-700">
-                Gérez vos équipes sportives
-              </p>
+          {events.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <span className="text-4xl mb-4 block">🏃‍♂️</span>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Aucune disponibilité pour le moment
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  Sois le premier à proposer une session !
+                </p>
+                <Button onClick={handleCreateEvent}>
+                  Créer une disponibilité
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onJoin={handleJoinEvent}
+                  onView={handleViewEvent}
+                />
+              ))}
             </div>
+          )}
+        </div>
 
-            <div className="bg-green-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-green-900 mb-2">
-                Entraînements
-              </h3>
-              <p className="text-green-700">
-                Planifiez vos sessions
-              </p>
-            </div>
-
-            <div className="bg-purple-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-purple-900 mb-2">
-                Matchs
-              </h3>
-              <p className="text-purple-700">
-                Suivez vos compétitions
-              </p>
-            </div>
-          </div>
+        {/* Stats rapides */}
+        <div className="mt-8 grid grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="text-center p-4">
+              <div className="text-2xl font-bold text-indigo-600">0</div>
+              <div className="text-sm text-gray-500">Matchs joués</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="text-center p-4">
+              <div className="text-2xl font-bold text-green-600">0</div>
+              <div className="text-sm text-gray-500">Sports pratiqués</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="text-center p-4">
+              <div className="text-2xl font-bold text-orange-600">-</div>
+              <div className="text-sm text-gray-500">Note moyenne</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
