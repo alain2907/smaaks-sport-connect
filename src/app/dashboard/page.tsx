@@ -8,12 +8,14 @@ import { EventCard } from '@/components/events/EventCard';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { QuickGuide } from '@/components/onboarding/QuickGuide';
 
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,8 +30,11 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-500"></div>
+          <div className="absolute top-0 left-0 animate-ping rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 opacity-50"></div>
+        </div>
       </div>
     );
   }
@@ -56,47 +61,61 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                Sport Connect
+              <h1 className="text-2xl font-bold text-white">
+                🏆 Sport Connect
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-purple-100">
                 Salut {getUserDisplayName()} 👋
               </p>
             </div>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={handleCreateEvent}
+              className="shadow-xl"
             >
-              ➕ Proposer une dispo
+              ✨ Proposer une dispo
             </Button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Guide rapide pour nouveaux utilisateurs */}
+        {showGuide ? (
+          <div className="mb-6">
+            <QuickGuide
+              onComplete={() => setShowGuide(false)}
+            />
+          </div>
+        ) : (
+          <div className="mb-4">
+            <QuickGuide isCompact={true} />
+          </div>
+        )}
+
         {/* Suggestions personnalisées */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">
-            Suggestions pour toi
+          <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+            ✨ Suggestions pour toi
           </h2>
-          <Card>
+          <Card variant="gradient">
             <CardContent className="text-center py-8">
-              <span className="text-4xl mb-4 block">🎯</span>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <span className="text-5xl mb-4 block animate-bounce">🎯</span>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
                 Pas encore de suggestions
               </h3>
-              <p className="text-gray-500 mb-4">
+              <p className="text-gray-600 mb-6">
                 Complète ton profil pour recevoir des suggestions personnalisées
               </p>
-              <Button variant="outline" size="sm">
-                Compléter mon profil
+              <Button variant="gradient" size="sm">
+                ✏️ Compléter mon profil
               </Button>
             </CardContent>
           </Card>
@@ -104,27 +123,27 @@ export default function Dashboard() {
 
         {/* Fil des disponibilités */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Disponibilités récentes
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+              🏃‍♂️ Disponibilités récentes
             </h2>
             <Badge variant="info" size="sm">
-              {events.length} dispos actives
+              🔥 {events.length} dispos actives
             </Badge>
           </div>
 
           {events.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <span className="text-4xl mb-4 block">🏃‍♂️</span>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Card variant="glass">
+              <CardContent className="text-center py-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl">
+                <span className="text-6xl mb-6 block animate-pulse">🏃‍♂️</span>
+                <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-3">
                   Aucune disponibilité pour le moment
                 </h3>
-                <p className="text-gray-500 mb-4">
+                <p className="text-gray-600 mb-6">
                   Sois le premier à proposer une session !
                 </p>
-                <Button onClick={handleCreateEvent}>
-                  Créer une disponibilité
+                <Button variant="primary" onClick={handleCreateEvent}>
+                  🚀 Créer une disponibilité
                 </Button>
               </CardContent>
             </Card>
@@ -144,22 +163,22 @@ export default function Dashboard() {
 
         {/* Stats rapides */}
         <div className="mt-8 grid grid-cols-3 gap-4">
-          <Card>
+          <Card variant="gradient" className="hover-lift">
             <CardContent className="text-center p-4">
-              <div className="text-2xl font-bold text-indigo-600">0</div>
-              <div className="text-sm text-gray-500">Matchs joués</div>
+              <div className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">0</div>
+              <div className="text-sm font-medium text-gray-600">⚽ Matchs joués</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="gradient" className="hover-lift">
             <CardContent className="text-center p-4">
-              <div className="text-2xl font-bold text-green-600">0</div>
-              <div className="text-sm text-gray-500">Sports pratiqués</div>
+              <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">0</div>
+              <div className="text-sm font-medium text-gray-600">🏃 Sports pratiqués</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="gradient" className="hover-lift">
             <CardContent className="text-center p-4">
-              <div className="text-2xl font-bold text-orange-600">-</div>
-              <div className="text-sm text-gray-500">Note moyenne</div>
+              <div className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">-</div>
+              <div className="text-sm font-medium text-gray-600">⭐ Note moyenne</div>
             </CardContent>
           </Card>
         </div>

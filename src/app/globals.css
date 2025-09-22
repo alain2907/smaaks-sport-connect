@@ -1,8 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Palette de couleurs vibrantes */
+  --primary: #FF6B6B;        /* Rouge corail énergique */
+  --primary-dark: #FF5252;
+  --secondary: #4ECDC4;      /* Turquoise dynamique */
+  --secondary-dark: #38B2AC;
+  --accent: #FFD93D;         /* Jaune doré */
+  --accent-dark: #FFC107;
+  --success: #6BCF7F;        /* Vert menthe */
+  --warning: #FF9F43;        /* Orange vif */
+  --danger: #EE5A6F;         /* Rose punch */
+  --info: #54A0FF;           /* Bleu électrique */
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-accent: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --gradient-sport: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+
+  /* Backgrounds */
+  --background: #FAFBFC;
+  --background-secondary: #F5F7FA;
+  --surface: #FFFFFF;
+  --foreground: #1A202C;
+  --foreground-muted: #4A5568;
 
   /* Safe areas pour PWA */
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
@@ -12,16 +34,43 @@
 }
 
 @theme inline {
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-secondary: var(--secondary);
+  --color-secondary-dark: var(--secondary-dark);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --primary: #FF7979;
+    --primary-dark: #FF6B6B;
+    --secondary: #5EDBD2;
+    --secondary-dark: #4ECDC4;
+    --accent: #FFE066;
+    --accent-dark: #FFD93D;
+    --success: #7DD891;
+    --warning: #FFA94D;
+    --danger: #FF6B7A;
+    --info: #69A9FF;
+
+    --background: #0F1419;
+    --background-secondary: #1A202C;
+    --surface: #2D3748;
+    --foreground: #F7FAFC;
+    --foreground-muted: #A0AEC0;
   }
 }
 
@@ -29,6 +78,62 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Utilitaires de couleurs personnalisés */
+.bg-gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.bg-gradient-secondary {
+  background: var(--gradient-secondary);
+}
+
+.bg-gradient-accent {
+  background: var(--gradient-accent);
+}
+
+.bg-gradient-sport {
+  background: var(--gradient-sport);
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-secondary {
+  color: var(--secondary);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.bg-secondary {
+  background-color: var(--secondary);
+}
+
+.bg-accent {
+  background-color: var(--accent);
+}
+
+.bg-surface {
+  background-color: var(--surface);
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
 /* Safe area utilities pour PWA */
