@@ -90,8 +90,7 @@ export default function HowToCreate() {
           {CREATION_STEPS.map((step, index) => (
             <div
               key={index}
-              onClick={() => router.push('/create')}
-              className="cursor-pointer transform hover:scale-105 transition-all duration-300 hover:shadow-2xl"
+              className="transform hover:scale-105 transition-all duration-300 hover:shadow-2xl"
             >
               <Card variant="gradient" className="h-full">
                 <CardContent className="p-6">
@@ -116,8 +115,18 @@ export default function HowToCreate() {
                           </li>
                         ))}
                       </ul>
-                      <div className="mt-3 text-xs text-purple-600 font-medium">
-                        👆 Cliquer pour créer ton événement
+                      <div className="mt-4">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push('/create');
+                          }}
+                          className="w-full"
+                        >
+                          🚀 Créer mon événement
+                        </Button>
                       </div>
                     </div>
                   </div>
