@@ -88,41 +88,42 @@ export default function HowToCreate() {
         {/* Steps */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {CREATION_STEPS.map((step, index) => (
-            <Card
+            <div
               key={index}
-              variant="gradient"
-              className="h-full cursor-pointer transform hover:scale-105 transition-all duration-300 hover:shadow-2xl"
               onClick={() => router.push('/create')}
+              className="cursor-pointer transform hover:scale-105 transition-all duration-300 hover:shadow-2xl"
             >
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                      {index + 1}
+              <Card variant="gradient" className="h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                        {index + 1}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-2xl">{step.emoji}</span>
+                        <h3 className="text-lg font-bold text-gray-800">{step.title}</h3>
+                        <span className="text-purple-500 text-sm font-medium">→ Créer</span>
+                      </div>
+                      <p className="text-gray-600 mb-3">{step.description}</p>
+                      <ul className="space-y-1">
+                        {step.tips.map((tip, tipIndex) => (
+                          <li key={tipIndex} className="text-sm text-gray-500 flex items-start">
+                            <span className="text-purple-400 mr-2">•</span>
+                            {tip}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-3 text-xs text-purple-600 font-medium">
+                        👆 Cliquer pour créer ton événement
+                      </div>
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-2xl">{step.emoji}</span>
-                      <h3 className="text-lg font-bold text-gray-800">{step.title}</h3>
-                      <span className="text-purple-500 text-sm font-medium">→ Créer</span>
-                    </div>
-                    <p className="text-gray-600 mb-3">{step.description}</p>
-                    <ul className="space-y-1">
-                      {step.tips.map((tip, tipIndex) => (
-                        <li key={tipIndex} className="text-sm text-gray-500 flex items-start">
-                          <span className="text-purple-400 mr-2">•</span>
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-3 text-xs text-purple-600 font-medium">
-                      👆 Cliquer pour créer ton événement
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           ))}
         </div>
 
