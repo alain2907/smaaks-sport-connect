@@ -20,7 +20,7 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       router.push('/dashboard');
-    } catch (error) {
+    } catch {
       setError('Erreur de connexion. Vérifiez vos identifiants.');
     } finally {
       setLoading(false);
@@ -34,7 +34,7 @@ export default function LoginPage() {
     try {
       await signInWithGoogle();
       router.push('/dashboard');
-    } catch (error) {
+    } catch {
       setError('Erreur de connexion avec Google.');
     } finally {
       setLoading(false);

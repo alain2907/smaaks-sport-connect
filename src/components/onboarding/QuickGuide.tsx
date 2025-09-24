@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 
@@ -9,12 +10,13 @@ const steps = [
     number: '1',
     emoji: '👤',
     title: 'CRÉE',
-    subtitle: 'ton compte',
-    description: 'Choisis tes sports + active ta localisation',
+    subtitle: 'ton annonce',
+    description: 'Crée une annonce sportive avec lieu, date et nombre de joueurs',
     color: 'bg-gradient-to-r from-blue-500 to-blue-600',
     lightColor: 'bg-gradient-to-r from-blue-100 to-blue-200',
     borderColor: 'border-blue-400',
     textColor: 'text-blue-600',
+    action: '/how-to-create',
   },
   {
     number: '2',
@@ -26,6 +28,7 @@ const steps = [
     lightColor: 'bg-gradient-to-r from-emerald-100 to-green-200',
     borderColor: 'border-emerald-400',
     textColor: 'text-emerald-600',
+    action: '/create',
   },
   {
     number: '3',
@@ -37,6 +40,7 @@ const steps = [
     lightColor: 'bg-gradient-to-r from-purple-100 to-violet-200',
     borderColor: 'border-purple-400',
     textColor: 'text-purple-600',
+    action: '/search',
   },
   {
     number: '4',
@@ -48,6 +52,7 @@ const steps = [
     lightColor: 'bg-gradient-to-r from-amber-100 to-orange-200',
     borderColor: 'border-amber-400',
     textColor: 'text-amber-600',
+    action: '/messages',
   },
   {
     number: '5',
@@ -59,6 +64,7 @@ const steps = [
     lightColor: 'bg-gradient-to-r from-red-100 to-rose-200',
     borderColor: 'border-red-400',
     textColor: 'text-red-600',
+    action: '/dashboard',
   },
 ];
 
@@ -70,6 +76,11 @@ interface QuickGuideProps {
 export function QuickGuide({ onComplete, isCompact = false }: QuickGuideProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showAll, setShowAll] = useState(false);
+  const router = useRouter();
+
+  const handleStepClick = (step: typeof steps[0]) => {
+    router.push(step.action);
+  };
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -106,6 +117,7 @@ export function QuickGuide({ onComplete, isCompact = false }: QuickGuideProps) {
             {steps.map((step, index) => (
               <div
                 key={index}
+                onClick={() => handleStepClick(step)}
                 className={`${step.lightColor} border-2 ${step.borderColor} rounded-2xl p-4 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer`}
               >
                 <div className="flex items-center mb-3">
@@ -128,6 +140,7 @@ export function QuickGuide({ onComplete, isCompact = false }: QuickGuideProps) {
             {steps.map((step, index) => (
               <div
                 key={index}
+                onClick={() => handleStepClick(step)}
                 className={`flex-shrink-0 flex items-center space-x-2 ${step.lightColor} ${step.borderColor} border-2 rounded-full px-4 py-2 hover:shadow-lg transform hover:scale-105 transition-all cursor-pointer`}
               >
                 <span className="text-xl">{step.emoji}</span>

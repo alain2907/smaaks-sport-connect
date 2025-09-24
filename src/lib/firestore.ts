@@ -25,8 +25,8 @@ export const COLLECTIONS = {
 // Utilitaire pour convertir les timestamps Firestore
 function convertTimestamp(timestamp: unknown): Date {
   if (!timestamp) return new Date();
-  if (typeof timestamp === 'object' && timestamp !== null && 'toDate' in timestamp && typeof (timestamp as any).toDate === 'function') {
-    return (timestamp as any).toDate();
+  if (typeof timestamp === 'object' && timestamp !== null && 'toDate' in timestamp && typeof (timestamp as { toDate: () => Date }).toDate === 'function') {
+    return (timestamp as { toDate: () => Date }).toDate();
   }
   if (timestamp instanceof Date) return timestamp;
   return new Date(String(timestamp));
@@ -173,6 +173,17 @@ export class EventsService {
         updatedAt: serverTimestamp()
       });
     }
+  }
+
+  static async updateEvent(eventId: string, updates: Partial<Omit<Event, 'id' | 'creatorId' | 'participantIds' | 'status' | 'createdAt' | 'updatedAt'>>): Promise<void> {
+    if (!db) throw new Error('Firestore not initialized');
+
+    const eventRef = doc(db, COLLECTIONS.EVENTS, eventId);
+
+    await updateDoc(eventRef, {
+      ...updates,
+      updatedAt: serverTimestamp()
+    });
   }
 
   static subscribeToEvents(
@@ -346,7 +357,7 @@ export class DemoDataService {
     }
   }
 
-  private static async createDemoEvent(eventData: any): Promise<void> {
+  private static async createDemoEvent(eventData: Record<string, unknown>): Promise<void> {
     const event = {
       ...eventData,
       participantIds: [eventData.creatorId],

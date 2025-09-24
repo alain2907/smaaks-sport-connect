@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SPORTS, SPORT_LEVELS, SportLevel } from '@/types/sport';
 import { auth, db } from '@/lib/firebase';
 import { updateProfile } from 'firebase/auth';
@@ -37,13 +37,7 @@ export default function Profile() {
     availability: [],
   });
 
-  useEffect(() => {
-    if (user) {
-      loadUserProfile();
-    }
-  }, [user]);
-
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     if (!user || !db) return;
 
     try {
@@ -70,7 +64,13 @@ export default function Profile() {
     } catch (error) {
       console.error('Error loading profile:', error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadUserProfile();
+    }
+  }, [user, loadUserProfile]);
 
   const handleSaveProfile = async () => {
     if (!user || !db) return;

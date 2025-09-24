@@ -22,6 +22,7 @@ npm run typecheck   # Vérification TypeScript (si configuré)
 ```bash
 # Déploiement avec protection automatique
 ./deploy.sh         # Script de déploiement sécurisé avec vérifications
+node deploy.js      # Script Node.js avec validation automatique
 
 # Le script vérifie automatiquement :
 # ✅ Bon dossier de projet (smaaks-sport-connect)
@@ -30,6 +31,21 @@ npm run typecheck   # Vérification TypeScript (si configuré)
 # ✅ Pas de fichiers sensibles (vercel-env-vars.txt)
 # ✅ Build réussi
 # ✅ Confirmation manuelle
+```
+
+### Validation et Correction Automatique
+```bash
+# RAPPEL IMPORTANT : Pour corriger automatiquement tous les problèmes
+./validate.sh                    # Corrige : apostrophes, variables error, build, etc.
+node deploy.js --force          # Déploie avec validation automatique intégrée
+node deploy.js --skip-checks    # Déploie en ignorant les vérifications
+
+# ⚠️  TOUJOURS utiliser ces scripts au lieu de corriger manuellement !
+# Ils corrigent tous les problèmes d'un coup :
+# - Apostrophes non échappées (l' → l&apos;)
+# - Variables error inutilisées (catch (error) → catch)
+# - Problèmes ESLint/TypeScript
+# - Validation du build
 ```
 
 ## 🔒 Système de Protection Automatique

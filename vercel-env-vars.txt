@@ -7,7 +7,8 @@
 #
 # NE PAS COMMITER CE FICHIER ! (contient des secrets)
 #
-# Variables à copier :NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyDchDtEb58CLaFDp7wqu4edVAqNWu-r00M
+# Variables à copier :
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyDchDtEb58CLaFDp7wqu4edVAqNWu-r00M
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=smaaks-1.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=smaaks-1
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=smaaks-1.firebasestorage.app

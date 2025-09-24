@@ -96,7 +96,15 @@ npm start
 # Linting
 npm run lint
 
-# Déploiement sécurisé
+# Validation complète avant commit/déploiement
+npm run validate
+
+# Déploiement sécurisé (JavaScript/Node.js)
+npm run deploy                    # Déploiement normal avec vérifications
+npm run deploy:force             # Déploiement forcé sans confirmation
+npm run deploy:quick             # Déploiement rapide sans vérifications
+
+# Déploiement sécurisé (Bash - legacy)
 ./deploy.sh
 ```
 
@@ -115,16 +123,26 @@ npm run lint
 6. ✅ Build de production
 
 ### Déploiement
+
 ```bash
-# Déploiement sécurisé avec vérifications
+# 1. Validation préalable (optionnel mais recommandé)
+./validate.sh
+
+# 2. Déploiement sécurisé avec vérifications complètes
 ./deploy.sh
 
-# Le script vérifiera automatiquement :
+# Le script deploy.sh vérifiera automatiquement :
 # - Bon projet Vercel lié
-# - Build réussi
-# - Aucun fichier sensible
-# - Confirmation manuelle
+# - Erreurs ESLint courantes (apostrophes, variables inutilisées)
+# - Build local réussi
+# - Checklist de vérifications manuelles
+# - Confirmation manuelle avant déploiement
 ```
+
+### 📋 Outils de Qualité
+- **`./validate.sh`** : Validation complète (ESLint, TypeScript, build, vérifications spécifiques)
+- **`./deploy.sh`** : Déploiement sécurisé avec checklist intégrée
+- **`DEPLOYMENT_CHECKLIST.md`** : Guide complet des vérifications manuelles
 
 ## 🏗️ Architecture
 

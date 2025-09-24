@@ -13,10 +13,12 @@ const firebaseConfig = {
 };
 
 // Debug: Check if config is loaded
-console.log('Firebase config loaded:', {
+console.log('🔥 Firebase config loaded:', {
   apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
   authDomain: firebaseConfig.authDomain ? 'Set' : 'Missing',
   projectId: firebaseConfig.projectId ? 'Set' : 'Missing',
+  environment: typeof window !== 'undefined' ? 'Client' : 'Server',
+  domain: typeof window !== 'undefined' ? window.location.hostname : 'N/A'
 });
 
 let app;
@@ -31,9 +33,11 @@ try {
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
 
-console.log('Firebase services:', {
+console.log('🔥 Firebase services:', {
   auth: auth ? 'Initialized' : 'Failed',
-  db: db ? 'Initialized' : 'Failed'
+  db: db ? 'Initialized' : 'Failed',
+  authDomain: firebaseConfig.authDomain,
+  currentDomain: typeof window !== 'undefined' ? window.location.origin : 'Server-side'
 });
 
 export default app;

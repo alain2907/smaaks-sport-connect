@@ -53,8 +53,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     if (!auth) throw new Error('Firebase auth not initialized');
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+
+    try {
+      console.log('🔍 Tentative de connexion Google...');
+      const provider = new GoogleAuthProvider();
+
+      // Configuration pour forcer la sélection de compte
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+
+      console.log('🔧 Provider configuré:', provider);
+      const result = await signInWithPopup(auth, provider);
+      console.log('✅ Connexion Google réussie:', result.user.email);
+
+    } catch (error: unknown) {
+      const firebaseError = error as { code?: string; message?: string; stack?: string };
+      console.error('❌ Erreur Google Sign-in:', error);
+      console.error('📋 Code erreur:', firebaseError.code);
+      console.error('📋 Message:', firebaseError.message);
+      console.error('📋 Stack:', firebaseError.stack);
+
+      // Messages d'erreur plus explicites
+      if (firebaseError.code === 'auth/popup-closed-by-user') {
+        throw new Error('Connexion annulée par l\'utilisateur');
+      } else if (firebaseError.code === 'auth/unauthorized-domain') {
+        throw new Error('Domaine non autorisé. Vérifiez la configuration Firebase.');
+      } else if (firebaseError.code === 'auth/operation-not-allowed') {
+        throw new Error('Authentification Google non activée dans Firebase.');
+      } else if (firebaseError.code === 'auth/popup-blocked') {
+        throw new Error('Popup bloquée par le navigateur. Autorisez les popups.');
+      } else if (firebaseError.code === 'auth/cancelled-popup-request') {
+        throw new Error('Requête popup annulée.');
+      } else {
+        throw new Error(`Erreur de connexion Google: ${firebaseError.message || 'Erreur inconnue'} (${firebaseError.code || 'no-code'})`);
+      }
+    }
   };
 
   const logout = async () => {

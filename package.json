@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate": "./validate.sh",
+    "deploy": "node deploy.js",
+    "deploy:force": "node deploy.js --force",
+    "deploy:quick": "node deploy.js --skip-checks"
   },
   "dependencies": {
     "firebase": "^12.3.0",

@@ -61,4 +61,90 @@ if [ "$confirm" != "oui" ]; then
 fi
 
 echo -e "${GREEN}✅ Déploiement de $PROJECT_NAME...${NC}"
+
+# ==============================================================================
+# 📋 VALIDATION COMPLÈTE AVEC validate.sh
+# ==============================================================================
+echo -e "${YELLOW}📋 Lancement de la validation complète...${NC}"
+echo ""
+
+# Exécuter validate.sh pour tout vérifier d'un coup
+if [ -f "./validate.sh" ]; then
+    echo -e "${YELLOW}🔍 Exécution de validate.sh...${NC}"
+    if ./validate.sh; then
+        echo -e "${GREEN}✅ Toutes les validations ont réussi !${NC}"
+    else
+        echo -e "${RED}❌ La validation a échoué${NC}"
+        echo -e "${YELLOW}💡 Corrigez les erreurs ci-dessus avant de déployer${NC}"
+        read -p "Voulez-vous continuer malgré tout? (oui/non): " force_deploy
+        if [ "$force_deploy" != "oui" ]; then
+            echo -e "${RED}❌ Déploiement annulé${NC}"
+            exit 1
+        fi
+    fi
+else
+    # Fallback si validate.sh n'existe pas
+    echo -e "${YELLOW}⚠️  validate.sh introuvable, vérifications basiques...${NC}"
+    echo -e "${YELLOW}   📝 Vérification des erreurs ESLint courantes...${NC}"
+
+ESLINT_ERRORS=0
+
+# Chercher les apostrophes non échappées
+if grep -r "l'" src/ --include="*.tsx" --include="*.ts" | grep -v "l&apos;" | grep -v "l\'" > /dev/null 2>&1; then
+    echo -e "${RED}   ❌ Apostrophes non échappées trouvées (remplacer ' par &apos;)${NC}"
+    ESLINT_ERRORS=1
+fi
+
+# Chercher les variables error inutilisées dans catch
+if grep -r "} catch (error) {" src/ --include="*.tsx" --include="*.ts" > /dev/null 2>&1; then
+    echo -e "${YELLOW}   ⚠️  Variables 'error' potentiellement inutilisées dans catch blocks${NC}"
+    echo -e "${YELLOW}      Remplacer par '} catch {' si la variable n'est pas utilisée${NC}"
+fi
+
+# Chercher les dépendances manquantes dans useEffect/useCallback
+if grep -r "useEffect\|useCallback" src/ --include="*.tsx" --include="*.ts" | grep -A5 -B5 "user\|db" | grep -v "dependencies" > /dev/null 2>&1; then
+    echo -e "${YELLOW}   ⚠️  Vérifier les dépendances des hooks (useEffect/useCallback)${NC}"
+fi
+
+# Chercher les imports inutilisés
+echo -e "${YELLOW}   🔍 Recherche des imports potentiellement inutilisés...${NC}"
+
+# Vérification 5: Build de test
+echo -e "${YELLOW}   🔨 Test de build local...${NC}"
+if npm run build > /dev/null 2>&1; then
+    echo -e "${GREEN}   ✅ Build local réussi${NC}"
+else
+    echo -e "${RED}   ❌ Build local échoué - vérifiez les erreurs TypeScript/ESLint${NC}"
+    echo -e "${YELLOW}   💡 Commandes de débogage:${NC}"
+    echo -e "${YELLOW}      - npm run build (voir les erreurs détaillées)${NC}"
+    echo -e "${YELLOW}      - npm run lint (vérifier ESLint)${NC}"
+    echo -e "${YELLOW}      - npm run typecheck (si disponible)${NC}"
+    ESLINT_ERRORS=1
+fi
+
+echo ""
+echo -e "${YELLOW}📋 TODO Manuel avant déploiement:${NC}"
+echo -e "${YELLOW}☐ 1. Tous les apostrophes sont échappés avec &apos;${NC}"
+echo -e "${YELLOW}☐ 2. Variables 'error' inutilisées remplacées par 'catch {'${NC}"
+echo -e "${YELLOW}☐ 3. Dépendances useEffect/useCallback correctes${NC}"
+echo -e "${YELLOW}☐ 4. Imports inutilisés supprimés${NC}"
+echo -e "${YELLOW}☐ 5. Build local fonctionne (npm run build)${NC}"
+echo -e "${YELLOW}☐ 6. Tests passent (si disponibles)${NC}"
+echo -e "${YELLOW}☐ 7. Variables d'environnement configurées${NC}"
+echo -e "${YELLOW}☐ 8. Pas de console.log sensibles${NC}"
+echo ""
+
+fi # Fermer le if [ -f "./validate.sh" ]
+
+if [ $ESLINT_ERRORS -eq 1 ]; then
+    echo -e "${RED}❌ Des problèmes ont été détectés!${NC}"
+    echo -e "${YELLOW}💡 Corrigez les problèmes ci-dessus avant de déployer${NC}"
+    read -p "Voulez-vous continuer malgré tout? (oui/non): " force_deploy
+    if [ "$force_deploy" != "oui" ]; then
+        echo -e "${RED}❌ Déploiement annulé${NC}"
+        exit 1
+    fi
+fi
+
+echo -e "${GREEN}🚀 Lancement du déploiement Vercel...${NC}"
 vercel --prod
