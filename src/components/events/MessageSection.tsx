@@ -103,6 +103,10 @@ export function MessageSection({ event }: MessageSectionProps) {
       setShowReportModal(null);
       setReportReason('inappropriate');
       setReportDescription('');
+
+      // Essayer d'envoyer un email à l'équipe SMAAKS
+      sendReportEmail(messageId);
+
       alert('Message signalé. Merci de votre vigilance.');
     } catch (error) {
       if (error instanceof Error && error.message.includes('déjà signalé')) {
@@ -111,6 +115,44 @@ export function MessageSection({ event }: MessageSectionProps) {
         alert('Erreur lors du signalement du message');
       }
       console.error('Error reporting message:', error);
+    }
+  };
+
+  const sendReportEmail = (messageId: string) => {
+    const reportedMessage = messages.find(msg => msg.id === messageId);
+    if (!reportedMessage) return;
+
+    const subject = `Signalement message - ${reportReason}`;
+    const body = `
+Bonjour,
+
+Un message a été signalé sur SMAAKS Sport Connect.
+
+Événement : ${event.title} (ID: ${event.id})
+Message signalé par : ${user?.displayName || user?.email || 'Utilisateur'}
+Auteur du message : ${reportedMessage.userName}
+Raison : ${reportReason}
+Description : ${reportDescription || 'Aucune description fournie'}
+
+Contenu du message :
+"${reportedMessage.content}"
+
+Date du message : ${formatDate(reportedMessage.createdAt)}
+
+Merci de prendre les mesures appropriées.
+
+Cordialement
+    `.trim();
+
+    const mailtoLink = `mailto:contact@smaaks.fr?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    // Essayer d'ouvrir le client mail
+    try {
+      const link = document.createElement('a');
+      link.href = mailtoLink;
+      link.click();
+    } catch {
+      console.log('Impossible d\'ouvrir le client mail, fallback vers la page de signalement');
     }
   };
 
@@ -308,6 +350,13 @@ export function MessageSection({ event }: MessageSectionProps) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                       rows={3}
                     />
+                  </div>
+
+                  {/* Info sur le processus de signalement */}
+                  <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded-lg">
+                    <p className="font-bold mb-1">📧 Signalement automatique :</p>
+                    <p>Un email sera envoyé à contact@smaaks.fr avec les détails du signalement.</p>
+                    <p>Si votre client email ne s&apos;ouvre pas, <a href="/settings/report" target="_blank" className="text-blue-600 hover:underline">utilisez notre formulaire de signalement</a>.</p>
                   </div>
 
                   <div className="flex justify-end space-x-2">
