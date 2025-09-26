@@ -354,8 +354,8 @@ Cordialement
 
                   {/* Info sur le processus de signalement */}
                   <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded-lg">
-                    <p className="font-bold mb-1">📧 Signalement automatique :</p>
-                    <p>Un email sera envoyé à contact@smaaks.fr avec les détails du signalement.</p>
+                    <p className="font-bold mb-1">📧 Envoyer l&apos;email de signalement :</p>
+                    <p>Votre client email s&apos;ouvrira avec un message pré-rempli pour contact@smaaks.fr</p>
                     <p>Si votre client email ne s&apos;ouvre pas, <a href="/settings/report" target="_blank" className="text-blue-600 hover:underline">utilisez notre formulaire de signalement</a>.</p>
                   </div>
 

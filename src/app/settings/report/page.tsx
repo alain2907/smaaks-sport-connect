@@ -163,7 +163,7 @@ Cordialement
                   size="lg"
                   className="w-full"
                 >
-                  📧 Envoyer le signalement par email
+                  📧 Ouvrir l&apos;email de signalement
                 </Button>
 
                 <div className="text-sm text-gray-600 bg-blue-50 p-4 rounded-lg">
