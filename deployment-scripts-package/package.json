@@ -1,0 +1,36 @@
+{
+  "name": "nextjs-deployment-scripts",
+  "version": "1.0.0",
+  "description": "Scripts de déploiement sécurisé pour projets Next.js TypeScript",
+  "main": "deploy.js",
+  "scripts": {
+    "deploy": "node deploy.js",
+    "deploy:force": "node deploy.js --force",
+    "deploy:skip-checks": "node deploy.js --skip-checks",
+    "validate": "./validate.sh",
+    "help": "node deploy.js --help"
+  },
+  "keywords": [
+    "nextjs",
+    "deployment",
+    "vercel",
+    "typescript",
+    "validation",
+    "eslint",
+    "automation"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "peerDependencies": {
+    "next": ">=14.0.0",
+    "typescript": ">=4.5.0",
+    "eslint": ">=8.0.0"
+  },
+  "bin": {
+    "deploy-nextjs": "./deploy.js",
+    "validate-nextjs": "./validate.sh"
+  }
+}

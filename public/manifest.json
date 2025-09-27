@@ -8,6 +8,8 @@
   "orientation": "portrait",
   "scope": "/",
   "start_url": "/",
+  "lang": "fr",
+  "categories": ["sports", "social", "lifestyle"],
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -48,6 +50,12 @@
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

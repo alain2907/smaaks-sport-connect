@@ -1,0 +1,51 @@
+{
+  "packageId": "com.smaaks.sport",
+  "host": "smaaks-sport-connect.vercel.app",
+  "name": "SMAAKS Sport Connect",
+  "launcherName": "SMAAKS Sport",
+  "display": "standalone",
+  "themeColor": "#5A2D82",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#FFFFFF",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://smaaks-sport-connect.vercel.app/icons/icon-512x512.png",
+  "maskableIconUrl": "https://smaaks-sport-connect.vercel.app/icons/icon-512x512.png",
+  "monochromeIconUrl": "https://smaaks-sport-connect.vercel.app/icons/icon-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "SMAAKS Sport Connect"
+  },
+  "appVersionName": "1.0.1",
+  "appVersionCode": 2,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://smaaks-sport-connect.vercel.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": false
+    },
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "displayOverride": [],
+  "appVersion": "1.0.1"
+}

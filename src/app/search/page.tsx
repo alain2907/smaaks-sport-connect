@@ -8,6 +8,7 @@ import { EventCard } from '@/components/events/EventCard';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Footer } from '@/components/layout/Footer';
 
 const SPORTS = [
   { id: 'all', name: 'Tous les sports', emoji: '🏆' },
@@ -331,6 +332,7 @@ export default function Search() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

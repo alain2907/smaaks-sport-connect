@@ -10,6 +10,15 @@ export interface Location {
   };
 }
 
+export interface ParticipantRequest {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: Date;
+  respondedAt?: Date;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -18,7 +27,8 @@ export interface Event {
   date: Date;
   location: string; // Simplified for demo
   maxParticipants: number;
-  participantIds: string[];
+  participantIds: string[]; // Keep for compatibility - approved participants only
+  participantRequests: ParticipantRequest[]; // New: all requests with status
   skillLevel: 'beginner' | 'intermediate' | 'advanced' | 'all';
   equipment?: string;
   creatorId: string;
@@ -36,4 +46,4 @@ export interface EventFilters {
   availableOnly?: boolean;
 }
 
-export type CreateEventData = Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'participantIds' | 'status'>;
+export type CreateEventData = Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'participantIds' | 'participantRequests' | 'status'>;

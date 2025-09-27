@@ -1,3 +1,9 @@
 {
-  "alias": ["smaaks-sport-connect.vercel.app"]
+  "alias": ["smaaks-sport-connect.vercel.app"],
+  "regions": ["cdg1"],
+  "functions": {
+    "src/app/**/*.tsx": {
+      "maxDuration": 10
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/hooks/useAuth";
 import { BottomTabs } from "@/components/navigation/BottomTabs";
+import { InstallProvider } from "@/components/InstallProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,8 +27,10 @@ export default function RootLayout({
       </head>
       <body className="antialiased" suppressHydrationWarning={true}>
         <AuthProvider>
-          {children}
-          <BottomTabs />
+          <InstallProvider>
+            {children}
+            <BottomTabs />
+          </InstallProvider>
         </AuthProvider>
       </body>
     </html>

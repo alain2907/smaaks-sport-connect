@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
+import { useNextAction } from '@/hooks/useNextAction';
 
 const steps = [
   {
@@ -52,7 +53,7 @@ const steps = [
     lightColor: 'bg-gradient-to-r from-amber-100 to-orange-200',
     borderColor: 'border-amber-400',
     textColor: 'text-amber-600',
-    action: '/messages',
+    action: '/organise',
   },
   {
     number: '5',
@@ -77,9 +78,38 @@ export function QuickGuide({ onComplete, isCompact = false }: QuickGuideProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const router = useRouter();
+  const { nextAction, loading: actionLoading } = useNextAction();
+
+  const getStepTitle = (step: typeof steps[0]) => {
+    if (step.number === '5' && nextAction && !actionLoading) {
+      return nextAction.label;
+    }
+    return step.title;
+  };
+
+  const getStepDescription = (step: typeof steps[0]) => {
+    if (step.number === '5' && nextAction && !actionLoading) {
+      switch (nextAction.type) {
+        case 'next_event':
+          return nextAction.event ? `${nextAction.event.title} - ${new Date(nextAction.event.date).toLocaleDateString('fr-FR')}` : 'Votre prochaine partie vous attend';
+        case 'search':
+          return 'Trouvez des parties à rejoindre';
+        case 'create':
+          return 'Commencez par créer votre premier événement';
+        default:
+          return step.description;
+      }
+    }
+    return step.description;
+  };
 
   const handleStepClick = (step: typeof steps[0]) => {
-    router.push(step.action);
+    // Pour le bouton JOUE, utiliser la logique intelligente
+    if (step.number === '5' && nextAction && !actionLoading) {
+      router.push(nextAction.url);
+    } else {
+      router.push(step.action);
+    }
   };
 
   const handleNext = () => {
@@ -127,10 +157,10 @@ export function QuickGuide({ onComplete, isCompact = false }: QuickGuideProps) {
                   <span className="ml-3 text-2xl">{step.emoji}</span>
                 </div>
                 <h4 className={`font-black text-sm ${step.textColor} mb-1`}>
-                  {step.title}
+                  {getStepTitle(step)}
                 </h4>
                 <p className="text-xs text-gray-700 font-medium">
-                  {step.description}
+                  {getStepDescription(step)}
                 </p>
               </div>
             ))}
@@ -144,7 +174,7 @@ export function QuickGuide({ onComplete, isCompact = false }: QuickGuideProps) {
                 className={`flex-shrink-0 flex items-center space-x-2 ${step.lightColor} ${step.borderColor} border-2 rounded-full px-4 py-2 hover:shadow-lg transform hover:scale-105 transition-all cursor-pointer`}
               >
                 <span className="text-xl">{step.emoji}</span>
-                <span className={`text-sm font-bold ${step.textColor}`}>{step.title}</span>
+                <span className={`text-sm font-bold ${step.textColor}`}>{getStepTitle(step)}</span>
               </div>
             ))}
           </div>
@@ -202,13 +232,13 @@ export function QuickGuide({ onComplete, isCompact = false }: QuickGuideProps) {
           <div className={`text-center mb-8 p-8 rounded-2xl ${steps[currentStep].lightColor} border-2 ${steps[currentStep].borderColor}`}>
             <div className="text-7xl mb-4 animate-bounce">{steps[currentStep].emoji}</div>
             <h3 className={`text-3xl font-black ${steps[currentStep].textColor} mb-2`}>
-              {steps[currentStep].title}{' '}
+              {getStepTitle(steps[currentStep])}{' '}
               <span className="text-xl font-medium text-gray-700">
                 {steps[currentStep].subtitle}
               </span>
             </h3>
             <p className="text-lg text-gray-800 font-medium mt-4">
-              {steps[currentStep].description}
+              {getStepDescription(steps[currentStep])}
             </p>
           </div>
 

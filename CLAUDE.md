@@ -123,11 +123,18 @@ Tous les badges utilisent des gradients avec effets hover.
 src/
 ├── app/                    # Pages Next.js App Router
 │   ├── dashboard/         # Dashboard utilisateur
-│   ├── profile/           # Profil utilisateur
-│   ├── login/             # Authentification
-│   ├── search/            # Recherche d'événements
-│   ├── create/            # Création d'événements
-│   ├── messages/          # Messagerie
+│   ├── search/            # Recherche d'événements avec filtres avancés
+│   ├── create/            # Création d'événements multi-étapes
+│   ├── events/[id]/       # Détails et modification d'événements
+│   ├── profile/           # Profil utilisateur complet
+│   ├── login/             # Authentification Firebase
+│   ├── settings/          # Pages légales RGPD
+│   │   ├── privacy/       # Politique de confidentialité
+│   │   ├── terms/         # Conditions d'utilisation
+│   │   ├── cookies/       # Politique des cookies
+│   │   ├── legal/         # Mentions légales
+│   │   └── child-safety/  # Protection des mineurs
+│   ├── how-to-create/     # Guide de création
 │   ├── globals.css        # Styles globaux et variables CSS
 │   └── layout.tsx         # Layout global avec navigation
 
@@ -138,15 +145,20 @@ src/
 │   │   └── Badge.tsx      # Badges animés
 │   ├── navigation/        # Composants de navigation
 │   │   └── BottomTabs.tsx # Navigation bottom avec glassmorphism
+│   ├── layout/            # Composants de layout
+│   │   └── Footer.tsx     # Footer avec liens légaux
 │   ├── events/            # Composants liés aux événements
+│   │   └── EventCard.tsx  # Carte d'événement réutilisable
 │   └── onboarding/        # Guide d'onboarding
 │       └── QuickGuide.tsx # Guide rapide interactif
 
 ├── hooks/                 # Hooks React personnalisés
-│   └── useAuth.tsx        # Hook d'authentification Firebase
+│   ├── useAuth.tsx        # Hook d'authentification Firebase
+│   └── useEvents.tsx      # Hook de gestion des événements
 
 ├── lib/                   # Utilitaires et configuration
-│   └── firebase.ts        # Configuration Firebase
+│   ├── firebase.ts        # Configuration Firebase
+│   └── firestore.ts       # Services Firestore
 
 └── types/                 # Types TypeScript
     ├── user.ts            # Types utilisateur
@@ -156,15 +168,28 @@ src/
 
 ### Configuration Firebase
 Fichier : `src/lib/firebase.ts`
-- Configuration Firebase Auth
-- Exports : `auth`, `app`
-- Utilisé par le hook `useAuth`
+- Configuration Firebase Auth et Firestore
+- Région : europe-west1 (Belgique) pour conformité RGPD
+- Exports : `auth`, `db`, `app`
+- Utilisé par les hooks `useAuth` et `useEvents`
+
+### Services Firestore
+Fichier : `src/lib/firestore.ts`
+- Service de gestion des événements
+- Opérations CRUD complètes
+- Gestion temps réel des participants
 
 ### Hook d'Authentification
 Fichier : `src/hooks/useAuth.tsx`
 - State management pour l'utilisateur connecté
 - Loading states
 - Persistence automatique
+
+### Hook d'Événements
+Fichier : `src/hooks/useEvents.tsx`
+- Gestion des événements en temps réel
+- Création, modification, suppression
+- Gestion des participants (rejoindre/quitter)
 
 ## 🔄 Workflow de Développement
 
@@ -185,6 +210,12 @@ Le hook pre-push s'exécute automatiquement et vérifie :
 git add .
 git commit -m "Description des changements"
 git push origin main    # Hook pre-push s'exécute automatiquement
+
+# Déploiement avec script JavaScript (recommandé)
+node deploy.js         # Déploiement interactif avec validations
+echo "oui" | node deploy.js  # Déploiement automatique
+
+# Ou script Bash (legacy)
 ./deploy.sh            # Déploiement sécurisé vers Vercel
 ```
 
@@ -235,20 +266,55 @@ Configuration dans `next.config.ts` :
 - Lazy loading par défaut
 - Responsive images
 
+## ✅ Fonctionnalités Implémentées
+
+### Phase 1 - Infrastructure ✅
+1. **Firebase Auth** : Authentification complète
+2. **Firebase Firestore** : Base de données événements (europe-west1)
+3. **Interface moderne** : Composants UI avec gradients
+4. **Navigation responsive** : Bottom tabs avec glassmorphism
+5. **Système de protection** : Scripts de déploiement sécurisé
+
+### Phase 2 - Fonctionnalités Événements ✅
+1. **Recherche d'événements** : Filtres par sport, niveau, localisation, date
+2. **Création d'événements** : Assistant multi-étapes avec suggestions
+3. **Gestion événements** : Détails, modification, participants temps réel
+4. **Système participants** : Rejoindre/quitter avec mise à jour instantanée
+
+### Phase 3 - Conformité Légale ✅
+1. **Pages légales complètes** : Confidentialité, CGU, Cookies, Mentions
+2. **Hébergement européen** : Vercel CDG1 + Firebase europe-west1
+3. **Footer légal** : Liens accessibles sur toutes les pages
+4. **Conformité RGPD** : Protection des données utilisateurs
+
 ## 🔮 Prochaines Étapes
 
-### Fonctionnalités à Implémenter
-1. **Firebase Firestore** : Base de données pour les événements
-2. **Real-time Updates** : Synchronisation en temps réel
-3. **Push Notifications** : Notifications web
-4. **Géolocalisation** : Événements par proximité
-5. **Chat System** : Messagerie temps réel
+### Phase 4 - Améliorations (Planifiée)
+1. **Push Notifications** : Notifications web en temps réel
+2. **Géolocalisation** : Événements par proximité GPS
+3. **Chat System** : Messagerie entre participants
+4. **Système de notation** : Évaluation des joueurs
 
-### Améliorations Techniques
+### Améliorations Techniques (Planifiées)
 1. **Tests** : Ajout de Jest/Testing Library
 2. **Storybook** : Documentation des composants
 3. **CI/CD** : Pipeline GitHub Actions
 4. **Analytics** : Suivi des performances
+5. **Cache optimization** : Optimisation des requêtes Firestore
+6. **PWA avancée** : Fonctionnalités offline étendues
+
+## 📊 Métriques Actuelles
+
+### Performance
+- **Build time** : ~11.8s avec Turbopack
+- **Bundle size** : 235kB First Load JS
+- **Pages générées** : 16 pages statiques + dynamiques
+- **Région déploiement** : CDG1 (Paris) pour latence optimale
+
+### Conformité
+- **RGPD** : ✅ Hébergement EU + Pages légales
+- **Sécurité** : ✅ Scripts de validation automatique
+- **Accessibilité** : ✅ Footer légal sur toutes les pages
 
 ---
 

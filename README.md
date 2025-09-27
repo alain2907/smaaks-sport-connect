@@ -14,17 +14,23 @@ Une Progressive Web App (PWA) moderne pour connecter les sportifs et organiser d
 - **Firebase Auth** : Connexion sécurisée avec email/mot de passe
 - **Gestion de profil** : Profil utilisateur complet avec informations sportives
 - **Protection des routes** : Accès sécurisé aux pages privées
+- **Conformité RGPD** : Pages légales complètes et conformes
 
 ### 📱 Interface Utilisateur
 - **Bottom Navigation** : Navigation intuitive avec effet glassmorphism
+- **Footer légal** : Liens vers toutes les pages légales sur chaque page
 - **Composants UI modernes** :
   - Boutons avec gradients et effets hover
   - Cards avec variantes (default, gradient, glass, neon)
   - Badges animés avec échelle au hover
 - **Responsive Design** : Optimisé mobile-first avec support PWA
+- **Pages légales complètes** : Confidentialité, CGU, Cookies, Mentions légales, Protection des mineurs
 
 ### 🏃‍♂️ Fonctionnalités Sportives
 - **Dashboard personnalisé** : Vue d'ensemble des activités
+- **Recherche d'événements** : Filtres avancés par sport, niveau, localisation
+- **Création d'événements** : Assistant multi-étapes avec suggestions intelligentes
+- **Gestion des événements** : Rejoindre/quitter, modifications, détails complets
 - **Système de disponibilités** : Proposition et recherche de sessions
 - **Guide d'onboarding** : Introduction interactive pour nouveaux utilisateurs
 - **Stats utilisateur** : Suivi des matchs joués et sports pratiqués
@@ -150,20 +156,33 @@ npm run deploy:quick             # Déploiement rapide sans vérifications
 - **Framework** : Next.js 15.5.3 avec App Router
 - **Styling** : Tailwind CSS 4 avec variables CSS custom
 - **Authentification** : Firebase Auth
-- **Déploiement** : Vercel
+- **Base de données** : Firebase Firestore (europe-west1)
+- **Déploiement** : Vercel (CDG1 Paris)
 - **PWA** : next-pwa pour l'expérience mobile
+- **Conformité** : RGPD avec hébergement européen
 
 ### Structure du Projet
 ```
 src/
 ├── app/                 # App Router pages
 │   ├── dashboard/       # Page d'accueil
+│   ├── search/          # Recherche d'événements
+│   ├── create/          # Création d'événements
+│   ├── events/[id]/     # Détails et modification d'événements
 │   ├── profile/         # Profil utilisateur
 │   ├── login/           # Authentification
-│   └── ...
+│   ├── settings/        # Pages légales
+│   │   ├── privacy/     # Politique de confidentialité
+│   │   ├── terms/       # Conditions d'utilisation
+│   │   ├── cookies/     # Politique des cookies
+│   │   ├── legal/       # Mentions légales
+│   │   └── child-safety/# Protection des mineurs
+│   └── how-to-create/   # Guide de création
 ├── components/          # Composants réutilisables
 │   ├── ui/             # Composants UI de base
 │   ├── navigation/     # Navigation
+│   ├── layout/         # Footer et layouts
+│   ├── events/         # Composants événements
 │   └── onboarding/     # Guide utilisateur
 ├── hooks/              # Hooks React custom
 ├── lib/                # Utilitaires et config
@@ -178,21 +197,29 @@ src/
 
 ## 🎯 Roadmap
 
-### Phase 1 ✅ (Actuelle)
+### Phase 1 ✅ (Complétée)
 - [x] Authentification Firebase
 - [x] Interface utilisateur moderne
 - [x] Navigation responsive
 - [x] Système de protection déploiement
+- [x] Recherche et création d'événements
+- [x] Gestion complète des événements
+- [x] Pages légales RGPD complètes
+- [x] Footer avec liens légaux
+- [x] Déploiement en production
 
-### Phase 2 🚧 (En cours)
-- [ ] Intégration Firebase Firestore
-- [ ] Système de matchmaking
-- [ ] Notifications push
-- [ ] Géolocalisation
+### Phase 2 ✅ (Complétée)
+- [x] Intégration Firebase Firestore
+- [x] Système d'événements temps réel
+- [x] Gestion des participants
+- [x] Hébergement européen (RGPD)
+- [x] Conformité légale complète
 
 ### Phase 3 📋 (Planifiée)
 - [ ] Chat en temps réel
 - [ ] Système de notation
+- [ ] Notifications push
+- [ ] Géolocalisation avancée
 - [ ] Intégrations calendrier
 - [ ] Analytics avancées
 
@@ -213,6 +240,14 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 - **Application Live** : [smaaks-sport-connect.vercel.app](https://smaaks-sport-connect.vercel.app)
 - **Repository GitHub** : [github.com/alain2907/smaaks-sport-connect](https://github.com/alain2907/smaaks-sport-connect)
 - **Issues** : [GitHub Issues](https://github.com/alain2907/smaaks-sport-connect/issues)
+
+## 🏢 Informations Légales
+
+**CORBERA 10 SAS** - Éditeur de SMAAKS Sport Connect
+- RCS Paris 123 456 789
+- Siège social : 10 Avenue des Sports, 75001 Paris
+- Hébergement : Vercel (CDG1 Paris) + Firebase (europe-west1)
+- Conformité RGPD : Données hébergées en Europe
 
 ---
 

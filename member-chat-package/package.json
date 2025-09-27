@@ -1,0 +1,40 @@
+{
+  "name": "member-chat-moderation-package",
+  "version": "1.0.0",
+  "description": "Système de messagerie temps réel avec modération complète et signalement pour applications Next.js",
+  "main": "src/lib/firestore.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "chat",
+    "messaging",
+    "moderation",
+    "firebase",
+    "firestore",
+    "nextjs",
+    "react",
+    "real-time",
+    "reporting",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "firebase": "^10.7.1",
+    "next": "^14.0.0 || ^15.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "peerDependencies": {
+    "firebase": "^10.0.0",
+    "next": ">=14.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "files": [
+    "src/**/*",
+    "README.md",
+    "package.json"
+  ]
+}

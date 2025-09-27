@@ -34,13 +34,6 @@ const TABS: TabItem[] = [
     activeIcon: '➕'
   },
   {
-    id: 'messages',
-    label: 'Messages',
-    icon: '💬',
-    href: '/messages',
-    activeIcon: '💬'
-  },
-  {
     id: 'profile',
     label: 'Profil',
     icon: '👤',
@@ -54,7 +47,7 @@ export function BottomTabs() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white to-purple-50/50 backdrop-blur-lg border-t-2 border-gradient-to-r from-purple-200 via-pink-200 to-blue-200 safe-area shadow-2xl">
-      <div className="grid grid-cols-5 h-20">
+      <div className="grid grid-cols-4 h-20">
         {TABS.map((tab) => {
           const isActive = pathname.startsWith(tab.href);
 

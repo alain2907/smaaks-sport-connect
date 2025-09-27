@@ -6,6 +6,7 @@ import {
   doc,
   getDocs,
   getDoc,
+  setDoc,
   serverTimestamp,
   onSnapshot,
   QuerySnapshot,
@@ -525,7 +526,7 @@ export class UsersService {
       // Generate username if not provided
       const username = userData.username || await this.generateUniqueUsername(userData.email || userId);
 
-      await updateDoc(userRef, {
+      await setDoc(userRef, {
         ...userData,
         username,
         createdAt: serverTimestamp(),

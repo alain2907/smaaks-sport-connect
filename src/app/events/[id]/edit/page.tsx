@@ -7,6 +7,7 @@ import { Event } from '@/types/event';
 import { EventsService } from '@/lib/firestore';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
+import { Footer } from '@/components/layout/Footer';
 
 const SPORTS = [
   { id: 'football', name: 'Football', emoji: '⚽' },
@@ -415,6 +416,7 @@ export default function EditEvent() {
           </div>
         </form>
       </div>
+      <Footer />
     </div>
   );
 }

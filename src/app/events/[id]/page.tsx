@@ -4,11 +4,18 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useEvents } from '@/hooks/useEvents';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { Event } from '@/types/event';
-import { EventsService } from '@/lib/firestore';
+import { EventsService, UsersService } from '@/lib/firestore';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Footer } from '@/components/layout/Footer';
+import { ParticipantRequest } from '@/types/event';
+import { UsernameSetup } from '@/components/auth/UsernameSetup';
+import Link from 'next/link';
+import { RescheduleModal } from '@/components/events/RescheduleModal';
+import { MessageSection } from '@/components/events/MessageSection';
 
 const SPORTS_EMOJI: { [key: string]: string } = {
   football: '⚽',
@@ -32,14 +39,38 @@ export default function EventDetail() {
   const params = useParams();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { hasUsername, refreshProfile } = useUserProfile();
   const { joinEvent, leaveEvent } = useEvents();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [managingRequest, setManagingRequest] = useState<string | null>(null);
+  const [userProfiles, setUserProfiles] = useState<{ [userId: string]: { username: string; displayName?: string } }>({});
+  const [showUsernameSetup, setShowUsernameSetup] = useState(false);
+  const [deletingEvent, setDeletingEvent] = useState(false);
+  const [reschedulingEvent, setReschedulingEvent] = useState(false);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
 
   const eventId = params.id as string;
+
+  // Function to create profile link component
+  const UserProfileLink = ({ userId, displayName, className = "" }: { userId: string; displayName: string; className?: string }) => {
+    const profile = userProfiles[userId];
+    if (!profile?.username) {
+      return <span className={className}>{displayName}</span>;
+    }
+
+    return (
+      <Link
+        href={`/user/${profile.username}`}
+        className={`${className} hover:text-purple-600 underline cursor-pointer`}
+      >
+        {displayName}
+      </Link>
+    );
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -58,6 +89,11 @@ export default function EventDetail() {
       setError(null);
       const eventData = await EventsService.getEventById(eventId);
       setEvent(eventData);
+
+      // Load user profiles for participants
+      if (eventData) {
+        await loadUserProfiles(eventData);
+      }
     } catch (err) {
       setError('Événement non trouvé');
       console.error('Error loading event:', err);
@@ -66,13 +102,51 @@ export default function EventDetail() {
     }
   };
 
+  const loadUserProfiles = async (eventData: Event) => {
+    const userIds = new Set<string>();
+
+    // Add creator
+    userIds.add(eventData.creatorId);
+
+    // Add all participants
+    eventData.participantIds.forEach(id => userIds.add(id));
+
+    // Add all users from requests
+    eventData.participantRequests?.forEach(req => userIds.add(req.userId));
+
+    // Load profiles for all unique user IDs
+    const profiles: { [userId: string]: { username: string; displayName?: string } } = {};
+
+    for (const userId of Array.from(userIds)) {
+      try {
+        const profile = await UsersService.getPublicUserProfile(userId);
+        if (profile) {
+          profiles[userId] = {
+            username: profile.username,
+            displayName: profile.displayName
+          };
+        }
+      } catch (err) {
+        console.error(`Error loading profile for user ${userId}:`, err);
+      }
+    }
+
+    setUserProfiles(profiles);
+  };
+
   const handleJoinLeave = async () => {
     if (!event || !user) return;
 
+    const isParticipant = event.participantIds.includes(user.uid);
+
+    // Si l'utilisateur veut rejoindre l'événement mais n'a pas de username
+    if (!isParticipant && !hasUsername) {
+      setShowUsernameSetup(true);
+      return;
+    }
+
     setActionLoading(true);
     try {
-      const isParticipant = event.participantIds.includes(user.uid);
-
       if (isParticipant) {
         await leaveEvent(eventId);
       } else {
@@ -82,10 +156,77 @@ export default function EventDetail() {
       // Reload event to get updated participant list
       await loadEvent();
     } catch {
-      setError('Erreur lors de l&apos;action');
+      setError("Erreur lors de l'action");
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleManageRequest = async (userId: string, action: 'approve' | 'reject') => {
+    if (!event || !user) return;
+
+    setManagingRequest(userId);
+    try {
+      if (action === 'approve') {
+        await EventsService.approveParticipantRequest(eventId, userId, user.uid);
+      } else {
+        await EventsService.rejectParticipantRequest(eventId, userId, user.uid);
+      }
+
+      // Reload event to get updated participant list
+      await loadEvent();
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
+    } finally {
+      setManagingRequest(null);
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!event || !user) return;
+
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.')) {
+      return;
+    }
+
+    setDeletingEvent(true);
+    try {
+      await EventsService.deleteEvent(eventId, user.uid);
+      router.push('/profile?deleted=true');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Erreur lors de la suppression de l\'événement');
+    } finally {
+      setDeletingEvent(false);
+    }
+  };
+
+  const handleRescheduleEvent = () => {
+    setShowRescheduleModal(true);
+  };
+
+  const handleConfirmReschedule = async (newDate: Date, newLocation?: string) => {
+    if (!event || !user) return;
+
+    setReschedulingEvent(true);
+    try {
+      await EventsService.rescheduleEvent(eventId, user.uid, newDate, newLocation);
+      // Recharger l'événement après reprogrammation
+      await loadEvent();
+      setShowRescheduleModal(false);
+      setError(null);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Erreur lors de la reprogrammation de l\'événement');
+    } finally {
+      setReschedulingEvent(false);
+    }
+  };
+
+  const handleCancelReschedule = () => {
+    setShowRescheduleModal(false);
+    setReschedulingEvent(false);
   };
 
   const formatDate = (date: Date) => {
@@ -164,6 +305,10 @@ export default function EventDetail() {
   const sportEmoji = SPORTS_EMOJI[event.sport] || '🏃‍♂️';
   const eventDate = new Date(event.date);
   const isPastEvent = eventDate < new Date();
+
+  // Check user's request status
+  const userRequest = event.participantRequests?.find(req => req.userId === user.uid);
+  const userRequestStatus = userRequest?.status;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 pb-20">
@@ -259,24 +404,116 @@ export default function EventDetail() {
                     )}
                   </div>
 
-                  <div className="bg-gray-50 rounded-xl p-4">
+                  {/* Participants approuvés */}
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
                     <p className="text-sm text-gray-600 mb-2">
-                      {event.participantIds.length > 0 ? 'Participants inscrits:' : 'Aucun participant pour le moment'}
+                      {event.participantIds.length > 0 ? 'Participants confirmés:' : 'Aucun participant confirmé'}
                     </p>
                     <div className="space-y-1">
-                      {event.participantIds.map((participantId, index) => (
-                        <div key={participantId} className="flex items-center space-x-2">
-                          <span className="text-purple-600">
-                            {participantId === event.creatorId ? '👑' : '👤'}
-                          </span>
-                          <span className="text-sm text-gray-800">
-                            {participantId === event.creatorId ? 'Organisateur' : `Participant ${index + 1}`}
-                            {participantId === user.uid && ' (Vous)'}
-                          </span>
-                        </div>
-                      ))}
+                      {event.participantIds.map((participantId, index) => {
+                        // Find participant info from requests or show as unknown
+                        const participantRequest = event.participantRequests?.find(req => req.userId === participantId && req.status === 'approved');
+                        const profile = userProfiles[participantId];
+                        const participantName = participantId === event.creatorId
+                          ? 'Organisateur'
+                          : profile?.displayName || profile?.username || participantRequest?.userName || `Participant ${index + 1}`;
+
+                        return (
+                          <div key={participantId} className="flex items-center space-x-2">
+                            <span className="text-purple-600">
+                              {participantId === event.creatorId ? '👑' : '✅'}
+                            </span>
+                            <UserProfileLink
+                              userId={participantId}
+                              displayName={participantName + (participantId === user?.uid ? ' (Vous)' : '')}
+                              className="text-sm text-gray-800"
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {/* Demandes en attente (visible uniquement par l'organisateur) */}
+                  {isCreator && event.participantRequests?.some(req => req.status === 'pending') && (
+                    <div className="bg-amber-50 rounded-xl p-4 mb-4">
+                      <p className="text-sm text-amber-600 mb-3 font-medium">
+                        🕒 Demandes en attente ({event.participantRequests.filter(req => req.status === 'pending').length})
+                      </p>
+                      <div className="space-y-3">
+                        {event.participantRequests
+                          .filter(req => req.status === 'pending')
+                          .map((request: ParticipantRequest) => (
+                          <div key={request.userId} className="flex items-center justify-between bg-white rounded-lg p-3">
+                            <div className="flex items-center space-x-3">
+                              <span className="text-amber-600">⏳</span>
+                              <div>
+                                <UserProfileLink
+                                  userId={request.userId}
+                                  displayName={userProfiles[request.userId]?.displayName || userProfiles[request.userId]?.username || request.userName}
+                                  className="text-sm font-medium text-gray-800"
+                                />
+                                <p className="text-xs text-gray-400">
+                                  @{userProfiles[request.userId]?.username || 'utilisateur'}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  Demandé le {new Date(request.requestedAt).toLocaleDateString('fr-FR')}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="success"
+                                onClick={() => handleManageRequest(request.userId, 'approve')}
+                                disabled={managingRequest === request.userId || isFull}
+                                className="text-xs"
+                              >
+                                {managingRequest === request.userId ? '⏳' : '✅'} Accepter
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                onClick={() => handleManageRequest(request.userId, 'reject')}
+                                disabled={managingRequest === request.userId}
+                                className="text-xs"
+                              >
+                                {managingRequest === request.userId ? '⏳' : '❌'} Refuser
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Demandes rejetées (visible uniquement par l'organisateur) */}
+                  {isCreator && event.participantRequests?.some(req => req.status === 'rejected') && (
+                    <div className="bg-red-50 rounded-xl p-4">
+                      <details>
+                        <summary className="text-sm text-red-600 cursor-pointer">
+                          ❌ Demandes refusées ({event.participantRequests.filter(req => req.status === 'rejected').length})
+                        </summary>
+                        <div className="space-y-2 mt-2">
+                          {event.participantRequests
+                            .filter(req => req.status === 'rejected')
+                            .map((request: ParticipantRequest) => (
+                            <div key={request.userId} className="flex items-center space-x-2 text-sm text-gray-600">
+                              <span>❌</span>
+                              <UserProfileLink
+                                userId={request.userId}
+                                displayName={userProfiles[request.userId]?.displayName || userProfiles[request.userId]?.username || request.userName}
+                                className="text-gray-600"
+                              />
+                              <span className="text-xs">
+                                (refusé le {request.respondedAt ? new Date(request.respondedAt).toLocaleDateString('fr-FR') : 'N/A'})
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    </div>
+                  )}
                 </div>
 
                 {event.description && (
@@ -295,22 +532,43 @@ export default function EventDetail() {
         </Card>
 
         {/* Action Buttons */}
-        {!isPastEvent && (
+        {(!isPastEvent || isCreator) && (
           <Card variant="gradient">
             <CardContent className="p-6">
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {isCreator ? (
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Badge variant="success" size="md" className="text-center">
-                      🎯 Vous êtes l&apos;organisateur
+                    <Badge variant={isPastEvent ? "default" : "success"} size="md" className="text-center">
+                      {isPastEvent ? '⏰ Événement passé - Organisateur' : "🎯 Vous êtes l'organisateur"}
                     </Badge>
+                    {isPastEvent ? (
+                      <Button
+                        variant="outline"
+                        size="md"
+                        onClick={handleRescheduleEvent}
+                        disabled={reschedulingEvent}
+                        className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                      >
+                        {reschedulingEvent ? '⏳ Reprogrammation...' : "📅 Reprogrammer l'événement"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="md"
+                        onClick={() => router.push(`/events/${eventId}/edit`)}
+                        className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                      >
+                        {"✏️ Modifier l'événement"}
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="md"
-                      onClick={() => router.push(`/events/${eventId}/edit`)}
-                      className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                      onClick={handleDeleteEvent}
+                      disabled={deletingEvent}
+                      className="border-red-300 text-red-600 hover:bg-red-50"
                     >
-                      ✏️ Modifier l&apos;événement
+                      {deletingEvent ? '⏳ Suppression...' : "🗑️ Supprimer l'événement"}
                     </Button>
                   </div>
                 ) : (
@@ -325,6 +583,27 @@ export default function EventDetail() {
                       >
                         {actionLoading ? '⏳ En cours...' : '❌ Se désinscrire'}
                       </Button>
+                    ) : userRequestStatus === 'pending' ? (
+                      <div className="flex-1 flex flex-col items-center space-y-2">
+                        <Badge variant="warning" size="md">
+                          ⏳ Demande en attente
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleJoinLeave}
+                          disabled={actionLoading}
+                          className="border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          {actionLoading ? '⏳ En cours...' : '❌ Annuler la demande'}
+                        </Button>
+                      </div>
+                    ) : userRequestStatus === 'rejected' ? (
+                      <div className="flex-1 text-center">
+                        <Badge variant="error" size="md">
+                          ❌ Demande refusée
+                        </Badge>
+                      </div>
                     ) : (
                       <Button
                         variant="primary"
@@ -333,7 +612,7 @@ export default function EventDetail() {
                         disabled={actionLoading || isFull}
                         className="flex-1"
                       >
-                        {actionLoading ? '⏳ En cours...' : isFull ? '🚫 Complet' : '✅ Rejoindre'}
+                        {actionLoading ? '⏳ En cours...' : isFull ? '🚫 Complet' : '📝 Demander à rejoindre'}
                       </Button>
                     )}
 
@@ -343,7 +622,7 @@ export default function EventDetail() {
                       onClick={() => router.push('/search')}
                       className="flex-1"
                     >
-                      🔍 Voir d&apos;autres événements
+                      {"🔍 Voir d'autres événements"}
                     </Button>
                   </>
                 )}
@@ -351,7 +630,40 @@ export default function EventDetail() {
             </CardContent>
           </Card>
         )}
+
+        {/* Messages Section */}
+        <MessageSection event={event} />
       </div>
+      <Footer />
+
+      {/* Modal de configuration du username */}
+      <UsernameSetup
+        isOpen={showUsernameSetup}
+        onComplete={(username) => {
+          console.log('Username configuré:', username);
+          setShowUsernameSetup(false);
+          refreshProfile().then(() => {
+            // Rejoindre l'événement maintenant que l'utilisateur a un username
+            handleJoinLeave();
+          });
+        }}
+        onCancel={() => setShowUsernameSetup(false)}
+        title="Nom d'utilisateur requis"
+        description="Pour rejoindre un événement, vous devez d'abord choisir un nom d'utilisateur. Il sera visible par les autres participants."
+      />
+
+      {/* Modal de reprogrammation */}
+      {event && (
+        <RescheduleModal
+          isOpen={showRescheduleModal}
+          eventTitle={event.title}
+          currentDate={event.date}
+          currentLocation={event.location}
+          onConfirm={handleConfirmReschedule}
+          onCancel={handleCancelReschedule}
+          loading={reschedulingEvent}
+        />
+      )}
     </div>
   );
 }

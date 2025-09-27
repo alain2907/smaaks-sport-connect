@@ -4,8 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
+import { Footer } from '@/components/layout/Footer';
+import { UsernameSetup } from '@/components/auth/UsernameSetup';
 
 const SPORTS = [
   { id: 'football', name: 'Football', emoji: '⚽' },
@@ -143,7 +146,9 @@ const DESCRIPTION_SUGGESTIONS: Record<string, string[]> = {
 export default function Create() {
   const router = useRouter();
   const { user } = useAuth();
+  const { hasUsername, refreshProfile } = useUserProfile();
   const { createEvent, error, clearError } = useEvents();
+  const [showUsernameSetup, setShowUsernameSetup] = useState(false);
 
   const [formData, setFormData] = useState({
     city: '',
@@ -152,6 +157,7 @@ export default function Create() {
     description: '',
     location: '',
     date: '',
+    time: '18:00',
     maxParticipants: 4,
     skillLevel: 'all' as string,
     equipment: ''
@@ -162,19 +168,42 @@ export default function Create() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [showSportSuggestions, setShowSportSuggestions] = useState(false);
   const [filteredCities, setFilteredCities] = useState(POPULAR_CITIES);
+  const [filteredSports, setFilteredSports] = useState(SPORTS);
   const [filteredLocations, setFilteredLocations] = useState<Array<{ id: string; name: string; type: string; emoji: string }>>([]); // Vide par défaut
 
   const STEPS = [
     { id: 'basic', title: 'Informations de base', description: 'Ville, titre et sport' },
     { id: 'details', title: 'Détails', description: 'Description et lieu précis' },
     { id: 'when', title: 'Quand et combien', description: 'Date et participants' },
-    { id: 'level', title: 'Niveau et équipement', description: 'Finalisation' }
+    { id: 'level', title: 'Niveau et équipement', description: 'Finalisation' },
+    { id: 'review', title: 'Révision', description: 'Vérifiez et confirmez' }
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    console.log('🚀 handleSubmit appelé', { currentStep, stepsLength: STEPS.length, user: !!user });
+
+    if (!user) {
+      console.log('❌ Pas d\'utilisateur connecté');
+      return;
+    }
+
+    // Vérifier si l'utilisateur a un username avant de continuer
+    if (!hasUsername) {
+      console.log('❌ Utilisateur sans username');
+      setShowUsernameSetup(true);
+      return;
+    }
+
+    // Only allow submission from the review step
+    if (currentStep !== STEPS.length - 1) {
+      console.log('❌ Pas à l\'étape de révision', { currentStep, expectedStep: STEPS.length - 1 });
+      return;
+    }
+
+    console.log('✅ Démarrage de la création d\'événement');
 
     // Clear previous errors
     setValidationError(null);
@@ -202,9 +231,9 @@ export default function Create() {
       return;
     }
 
-    const selectedDate = new Date(formData.date);
-    if (selectedDate <= new Date()) {
-      setValidationError('La date doit être dans le futur');
+    const selectedDateTime = new Date(`${formData.date}T${formData.time || '18:00'}`);
+    if (selectedDateTime <= new Date()) {
+      setValidationError('La date et l\'heure doivent être dans le futur');
       return;
     }
 
@@ -213,11 +242,14 @@ export default function Create() {
     try {
       const eventData = {
         ...formData,
-        date: selectedDate,
+        date: selectedDateTime,
         creatorId: user.uid
       };
 
-      const eventId = await createEvent({...eventData, skillLevel: eventData.skillLevel as "beginner" | "intermediate" | "advanced" | "all"});
+      // Remove time from formData as it's now included in date
+      const { time, ...eventDataWithoutTime } = eventData;
+
+      const eventId = await createEvent({...eventDataWithoutTime, skillLevel: eventDataWithoutTime.skillLevel as "beginner" | "intermediate" | "advanced" | "all"});
 
       if (eventId) {
         router.push('/dashboard');
@@ -238,14 +270,27 @@ export default function Create() {
       setValidationError(null);
     }
 
-    // Filter city suggestions when typing
+    // Filter city suggestions when typing - prioritize cities starting with input
     if (field === 'city' && typeof value === 'string') {
-      const filtered = POPULAR_CITIES.filter(city =>
-        city.name.toLowerCase().includes(value.toLowerCase()) ||
-        city.searchTerms.some(term => term.toLowerCase().includes(value.toLowerCase()))
-      );
-      setFilteredCities(filtered);
-      setShowCitySuggestions(value.length > 0 && filtered.length > 0);
+      if (value.length > 0) {
+        const lowerValue = value.toLowerCase();
+        // First, get cities that start with the input
+        const startsWithInput = POPULAR_CITIES.filter(city =>
+          city.name.toLowerCase().startsWith(lowerValue)
+        );
+        // Then get cities that contain the input but don't start with it
+        const containsInput = POPULAR_CITIES.filter(city =>
+          !city.name.toLowerCase().startsWith(lowerValue) &&
+          (city.name.toLowerCase().includes(lowerValue) ||
+           city.searchTerms.some(term => term.toLowerCase().includes(lowerValue)))
+        );
+        // Combine results: cities starting with input first, then others
+        const filtered = [...startsWithInput, ...containsInput].slice(0, 8);
+        setFilteredCities(filtered);
+        setShowCitySuggestions(filtered.length > 0);
+      } else {
+        setShowCitySuggestions(false);
+      }
     }
 
     // Filter location suggestions when typing in location field
@@ -259,13 +304,32 @@ export default function Create() {
       setShowLocationSuggestions(value.length > 0 && filtered.length > 0);
     }
 
-    // Update location suggestions when sport changes
+    // Filter sport suggestions when typing
     if (field === 'sport' && typeof value === 'string') {
-      const sportLocations = LOCATIONS_BY_SPORT[value] || [];
-      setFilteredLocations(sportLocations);
-      // Reset location if it doesn’t match the new sport
-      if (formData.location && !sportLocations.some(loc => loc.name === formData.location)) {
-        setFormData(prev => ({ ...prev, location: '' }));
+      if (value.length > 0) {
+        const lowerValue = value.toLowerCase();
+        // First, get sports that start with the input
+        const startsWithInput = SPORTS.filter(sport =>
+          sport.name.toLowerCase().startsWith(lowerValue)
+        );
+        // Then get sports that contain the input
+        const containsInput = SPORTS.filter(sport =>
+          !sport.name.toLowerCase().startsWith(lowerValue) &&
+          sport.name.toLowerCase().includes(lowerValue)
+        );
+        // Combine results: sports starting with input first, then others
+        const filtered = [...startsWithInput, ...containsInput].slice(0, 8);
+        setFilteredSports(filtered);
+        setShowSportSuggestions(filtered.length > 0);
+
+        // Update location suggestions based on selected sport
+        const sportMatch = SPORTS.find(s => s.name.toLowerCase() === value.toLowerCase());
+        if (sportMatch) {
+          const sportLocations = LOCATIONS_BY_SPORT[sportMatch.id] || [];
+          setFilteredLocations(sportLocations);
+        }
+      } else {
+        setShowSportSuggestions(false);
       }
     }
   };
@@ -278,6 +342,17 @@ export default function Create() {
   const selectLocation = (locationName: string) => {
     updateField('location', locationName);
     setShowLocationSuggestions(false);
+  };
+
+  const selectSport = (sportId: string) => {
+    const sport = SPORTS.find(s => s.id === sportId);
+    if (sport) {
+      updateField('sport', sport.name);
+      setShowSportSuggestions(false);
+      // Update locations for the selected sport
+      const sportLocations = LOCATIONS_BY_SPORT[sportId] || [];
+      setFilteredLocations(sportLocations);
+    }
   };
 
   const selectDescription = (description: string) => {
@@ -311,13 +386,16 @@ export default function Create() {
           setValidationError('La date est obligatoire');
           return false;
         }
-        const selectedDate = new Date(formData.date);
-        if (selectedDate <= new Date()) {
-          setValidationError('La date doit être dans le futur');
+        const selectedDateTime = new Date(`${formData.date}T${formData.time || '18:00'}`);
+        if (selectedDateTime <= new Date()) {
+          setValidationError('La date et l\'heure doivent être dans le futur');
           return false;
         }
         break;
-      case 3: // Final step
+      case 3: // Level step
+        // No specific validation needed
+        break;
+      case 4: // Review step
         // All validations are done
         break;
     }
@@ -345,6 +423,8 @@ export default function Create() {
       case 2:
         return formData.date !== '' && new Date(formData.date) > new Date();
       case 3:
+        return true;
+      case 4: // Review step
         return true;
       default:
         return false;
@@ -409,28 +489,6 @@ export default function Create() {
                     Ville * 🏙️
                   </label>
 
-                  {/* Villes populaires */}
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-3">Villes populaires :</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {POPULAR_CITIES.slice(0, 9).map((city) => (
-                        <button
-                          key={city.id}
-                          type="button"
-                          onClick={() => selectCity(city.name)}
-                          className={`p-2 rounded-lg border-2 transition-all text-left text-sm ${
-                            formData.city === city.name
-                              ? 'border-purple-500 bg-purple-100'
-                              : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
-                          }`}
-                        >
-                          <span className="text-base mr-1">{city.emoji}</span>
-                          <span className="font-medium text-xs">{city.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Champ de recherche ville avec autocomplétion */}
                   <div className="relative">
                     <input
@@ -446,7 +504,7 @@ export default function Create() {
                       onBlur={() => {
                         setTimeout(() => setShowCitySuggestions(false), 200);
                       }}
-                      placeholder="Ou recherchez votre ville..."
+                      placeholder="Tapez le nom de votre ville..."
                       className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all"
                     />
 
@@ -491,24 +549,45 @@ export default function Create() {
               <Card variant="gradient">
                 <CardContent className="p-6">
                   <label className="block text-sm font-bold text-gray-700 mb-4">
-                    Sport *
+                    Sport * ⚽
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {SPORTS.map((sport) => (
-                      <button
-                        key={sport.id}
-                        type="button"
-                        onClick={() => updateField('sport', sport.id)}
-                        className={`p-3 rounded-xl border-2 transition-all text-left ${
-                          formData.sport === sport.id
-                            ? 'border-purple-500 bg-purple-100'
-                            : 'border-gray-200 hover:border-purple-300'
-                        }`}
-                      >
-                        <span className="text-lg mr-2">{sport.emoji}</span>
-                        <span className="font-medium">{sport.name}</span>
-                      </button>
-                    ))}
+
+                  {/* Champ de recherche sport avec autocomplétion */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={formData.sport}
+                      onChange={(e) => updateField('sport', e.target.value)}
+                      onFocus={() => {
+                        if (formData.sport.length === 0) {
+                          setFilteredSports(SPORTS);
+                          setShowSportSuggestions(true);
+                        }
+                      }}
+                      onBlur={() => {
+                        setTimeout(() => setShowSportSuggestions(false), 200);
+                      }}
+                      placeholder="Tapez ou sélectionnez votre sport..."
+                      className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all"
+                    />
+
+                    {/* Suggestions dropdown sport */}
+                    {showSportSuggestions && filteredSports.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border-2 border-purple-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+                        {filteredSports.map((sport) => (
+                          <button
+                            key={sport.id}
+                            type="button"
+                            onClick={() => selectSport(sport.id)}
+                            className="w-full p-3 text-left hover:bg-purple-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-center"
+                          >
+                            <span className="text-xl mr-3">{sport.emoji}</span>
+                            <span className="font-medium">{sport.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -635,14 +714,14 @@ export default function Create() {
                 <Card variant="gradient">
                   <CardContent className="p-6">
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Date et heure *
+                      Date * 📅
                     </label>
                     <input
-                      type="datetime-local"
+                      type="date"
                       required
                       value={formData.date}
                       onChange={(e) => updateField('date', e.target.value)}
-                      min={new Date().toISOString().slice(0, 16)}
+                      min={new Date().toISOString().slice(0, 10)}
                       className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all"
                     />
                   </CardContent>
@@ -650,19 +729,116 @@ export default function Create() {
 
                 <Card variant="gradient">
                   <CardContent className="p-6">
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Nombre max de participants
+                    <label className="block text-sm font-bold text-gray-700 mb-4">
+                      Heure * 🕐
                     </label>
-                    <input
-                      type="number"
-                      min="2"
-                      max="50"
-                      value={formData.maxParticipants}
-                      onChange={(e) => updateField('maxParticipants', parseInt(e.target.value))}
-                      className="w-full p-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all"
-                    />
+                    <div className="flex gap-2 items-center justify-center">
+                      {/* Hours Picker */}
+                      <div className="flex flex-col items-center">
+                        <select
+                          value={formData.time.split(':')[0]}
+                          onChange={(e) => {
+                            const [, minutes] = formData.time.split(':');
+                            updateField('time', `${e.target.value}:${minutes || '00'}`);
+                          }}
+                          className="w-20 h-32 text-2xl font-bold text-center border-2 border-purple-200 rounded-xl bg-white focus:border-purple-500 appearance-none cursor-pointer"
+                          style={{
+                            backgroundImage: 'linear-gradient(to bottom, rgba(139, 92, 246, 0.1), transparent, rgba(139, 92, 246, 0.1))',
+                            scrollbarWidth: 'none'
+                          }}
+                        >
+                          {Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                            <option key={hour} value={hour} className="text-xl py-2">
+                              {hour}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-xs text-gray-500 mt-1">Heures</span>
+                      </div>
+
+                      <span className="text-3xl font-bold text-purple-600">:</span>
+
+                      {/* Minutes Picker */}
+                      <div className="flex flex-col items-center">
+                        <select
+                          value={formData.time.split(':')[1] || '00'}
+                          onChange={(e) => {
+                            const [hours] = formData.time.split(':');
+                            updateField('time', `${hours || '18'}:${e.target.value}`);
+                          }}
+                          className="w-20 h-32 text-2xl font-bold text-center border-2 border-purple-200 rounded-xl bg-white focus:border-purple-500 appearance-none cursor-pointer"
+                          style={{
+                            backgroundImage: 'linear-gradient(to bottom, rgba(139, 92, 246, 0.1), transparent, rgba(139, 92, 246, 0.1))',
+                            scrollbarWidth: 'none'
+                          }}
+                        >
+                          {['00', '15', '30', '45'].map(minute => (
+                            <option key={minute} value={minute} className="text-xl py-2">
+                              {minute}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-xs text-gray-500 mt-1">Minutes</span>
+                      </div>
+                    </div>
+                    <div className="text-center mt-4">
+                      <span className="text-lg font-medium text-gray-700">
+                        {formData.time || '18:00'}
+                      </span>
+                    </div>
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Nombre de participants */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <Card variant="gradient">
+                  <CardContent className="p-6">
+                    <label className="block text-sm font-bold text-gray-700 mb-4">
+                      Nombre de participants 👥
+                    </label>
+                    <div className="flex flex-col items-center">
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => formData.maxParticipants > 2 && updateField('maxParticipants', formData.maxParticipants - 1)}
+                          className="absolute left-0 top-1/2 w-10 h-10 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-600 font-bold text-xl transition-all"
+                          style={{ transform: 'translateY(-50%) translateX(-48px)' }}
+                        >
+                          −
+                        </button>
+
+                        <div className="w-24 h-24 rounded-full border-4 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center">
+                          <span className="text-4xl font-bold text-purple-600">
+                            {formData.maxParticipants}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => formData.maxParticipants < 20 && updateField('maxParticipants', formData.maxParticipants + 1)}
+                          className="absolute right-0 top-1/2 w-10 h-10 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-600 font-bold text-xl transition-all"
+                          style={{ transform: 'translateY(-50%) translateX(48px)' }}
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <div className="mt-4 text-center">
+                        <span className="text-sm text-gray-600">
+                          {formData.maxParticipants === 2 ? 'Duel' :
+                           formData.maxParticipants <= 4 ? 'Petit groupe' :
+                           formData.maxParticipants <= 8 ? 'Groupe moyen' :
+                           formData.maxParticipants <= 12 ? 'Grand groupe' :
+                           'Très grand groupe'}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div></div>
               </div>
             </>
           )}
@@ -714,6 +890,101 @@ export default function Create() {
             </>
           )}
 
+          {/* Step 4: Review & Confirm */}
+          {currentStep === 4 && (
+            <Card variant="gradient" className="p-2">
+              <CardContent className="p-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">📋 Révision de votre événement</h2>
+
+                <div className="space-y-4">
+                  {/* Basic Info */}
+                  <div className="border-b border-gray-200 pb-4">
+                    <h3 className="font-bold text-purple-600 mb-2">📍 Informations de base</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-gray-500">Ville:</span>
+                        <span className="ml-2 font-medium">{formData.city}</span>
+                        <button type="button" onClick={() => setCurrentStep(0)} className="ml-2 text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Sport:</span>
+                        <span className="ml-2 font-medium">{formData.sport}</span>
+                        <button type="button" onClick={() => setCurrentStep(0)} className="ml-2 text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-gray-500">Titre:</span>
+                        <span className="ml-2 font-medium">{formData.title}</span>
+                        <button type="button" onClick={() => setCurrentStep(0)} className="ml-2 text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="border-b border-gray-200 pb-4">
+                    <h3 className="font-bold text-purple-600 mb-2">📝 Détails</h3>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Lieu précis:</span>
+                        <span className="ml-2 font-medium">{formData.location}</span>
+                        <button type="button" onClick={() => setCurrentStep(1)} className="ml-2 text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Description:</span>
+                        <p className="mt-1 font-medium">{formData.description || 'Aucune description'}</p>
+                        <button type="button" onClick={() => setCurrentStep(1)} className="text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* When & How Many */}
+                  <div className="border-b border-gray-200 pb-4">
+                    <h3 className="font-bold text-purple-600 mb-2">📅 Date et participants</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-gray-500">Date:</span>
+                        <span className="ml-2 font-medium">{new Date(formData.date).toLocaleDateString('fr-FR')}</span>
+                        <button type="button" onClick={() => setCurrentStep(2)} className="ml-2 text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Heure:</span>
+                        <span className="ml-2 font-medium">{formData.time || '18:00'}</span>
+                        <button type="button" onClick={() => setCurrentStep(2)} className="ml-2 text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Participants max:</span>
+                        <span className="ml-2 font-medium">{formData.maxParticipants}</span>
+                        <button type="button" onClick={() => setCurrentStep(2)} className="ml-2 text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Level & Equipment */}
+                  <div>
+                    <h3 className="font-bold text-purple-600 mb-2">🎯 Niveau et équipement</h3>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Niveau requis:</span>
+                        <span className="ml-2 font-medium">{SKILL_LEVELS.find(l => l.id === formData.skillLevel)?.name}</span>
+                        <button type="button" onClick={() => setCurrentStep(3)} className="ml-2 text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Équipement:</span>
+                        <span className="ml-2 font-medium">{formData.equipment || 'Non spécifié'}</span>
+                        <button type="button" onClick={() => setCurrentStep(3)} className="ml-2 text-purple-600 hover:underline text-xs">✏️</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
+                  <p className="text-sm text-purple-700 font-medium">
+                    ⚠️ Une fois publié, l&apos;événement sera visible par tous les utilisateurs. Vous pourrez toujours le modifier ou l&apos;annuler depuis votre profil.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Navigation Buttons */}
           <div className="flex justify-between items-center pt-6">
             <Button
@@ -738,7 +1009,7 @@ export default function Create() {
               ))}
             </div>
 
-            {currentStep < STEPS.length - 1 ? (
+            {currentStep < STEPS.length - 2 ? (
               <Button
                 type="button"
                 variant="primary"
@@ -748,19 +1019,47 @@ export default function Create() {
               >
                 Suivant →
               </Button>
+            ) : currentStep === STEPS.length - 2 ? (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={nextStep}
+                disabled={!canProceed()}
+                className="font-bold"
+              >
+                Vérifier →
+              </Button>
             ) : (
               <Button
                 type="submit"
                 variant="primary"
                 disabled={isSubmitting || !canProceed()}
-                className="font-bold"
+                className="font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               >
-                {isSubmitting ? '⏳ Création...' : '🚀 Créer l&apos;événement'}
+                {isSubmitting ? '⏳ Publication...' : '✅ Confirmer et Publier'}
               </Button>
             )}
           </div>
         </form>
       </div>
+      <Footer />
+
+      {/* Modal de configuration du username */}
+      <UsernameSetup
+        isOpen={showUsernameSetup}
+        onComplete={(username) => {
+          console.log('Username configuré:', username);
+          setShowUsernameSetup(false);
+          refreshProfile().then(() => {
+            // Relancer la création d'événement maintenant que l'utilisateur a un username
+            const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+            handleSubmit(fakeEvent);
+          });
+        }}
+        onCancel={() => setShowUsernameSetup(false)}
+        title="Nom d'utilisateur requis"
+        description="Pour créer un événement, vous devez d'abord choisir un nom d'utilisateur. Il sera visible par les autres participants."
+      />
     </div>
   );
 }
